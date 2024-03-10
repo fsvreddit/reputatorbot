@@ -1,5 +1,6 @@
 import {Devvit} from "@devvit/public-api";
-import {handleThanksEvent, settingsForThanksPoints, updateLeaderboard} from "./thanksPoints.js";
+import {handleThanksEvent, updateLeaderboard} from "./thanksPoints.js";
+import {settingsForThanksPoints} from "./settings.js";
 
 Devvit.addSettings(settingsForThanksPoints);
 
