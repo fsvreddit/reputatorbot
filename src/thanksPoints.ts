@@ -33,7 +33,7 @@ export const settingsForThanksPoints: SettingsFormField[] = [
     {
         name: ThanksPointsSettingName.ThanksCommand,
         type: "string",
-        label: "Command for users to award points using",
+        label: "Command for users to award points",
         defaultValue: "!thanks",
         onValidate: ({value}) => {
             if (!value) {
@@ -44,7 +44,7 @@ export const settingsForThanksPoints: SettingsFormField[] = [
     {
         name: ThanksPointsSettingName.ModThanksCommand,
         type: "string",
-        label: "Command for mods to award points using",
+        label: "Command for mods to award points",
         defaultValue: "!modthanks",
     },
     {
@@ -129,17 +129,17 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     ]);
 
     // eslint-disable-next-line no-extra-parens
-    const commentContainsCommand = (userCommand && event.comment.body.includes(`!${userCommand}`)) || (modCommand && event.comment.body.includes(`!${modCommand}`));
+    const commentContainsCommand = (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase())) || (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase()));
     if (!commentContainsCommand) {
         return;
     }
 
-    if (userCommand && event.comment.body.includes(`!${userCommand}`) && event.author.id !== event.post.authorId) {
+    if (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase()) && event.author.id !== event.post.authorId) {
         console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
         return;
     }
 
-    if (modCommand && event.comment.body.includes(`!${modCommand}`)) {
+    if (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase())) {
         const isMod = await isModerator(context, event.subreddit.name, event.author.name);
         if (!isMod) {
             console.log(`${event.comment.id}: mod points attempt by non-mod ${event.author.name}`);
