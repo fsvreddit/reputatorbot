@@ -150,7 +150,7 @@ export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerC
     const subredditName = await getSubredditName(context);
 
     let wikiContents = `# ReputatorBot High Scores for ${subredditName}\n\nUser | Points Total\n-|-\n`;
-    wikiContents += highScores.map(score => `${score.member}|${score.score}`).join("\n");
+    wikiContents += highScores.map(score => `${markdownEscape(score.member)}|${score.score}`).join("\n");
 
     wikiContents += "\n\nThe leaderboard shows the top 20 users who have been awarded at least one point";
 
