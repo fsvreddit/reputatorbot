@@ -3,6 +3,7 @@ import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
 import {addWeeks} from "date-fns";
 import {LeaderboardMode, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
+import markdownEscape from "markdown-escape";
 
 const POINTS_STORE_KEY = "thanksPointsStore";
 
@@ -48,7 +49,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         const notifyOnError = await context.settings.get<boolean>(ThanksPointsSettingName.NotifyOnError);
         if (notifyOnError) {
             let message = await context.settings.get<string>(ThanksPointsSettingName.NotifyOnErrorTemplate) ?? TemplateDefaults.NotifyOnErrorTemplate;
-            message = replaceAll(message, "{{authorname}}", event.author.name);
+            message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
             const newComment = await context.reddit.submitComment({
                 id: event.comment.id,
                 text: message,
@@ -120,8 +121,8 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const notifyOnSuccess = await context.settings.get<boolean>(ThanksPointsSettingName.NotifyOnSuccess);
     if (notifyOnSuccess) {
         let message = await context.settings.get<string>(ThanksPointsSettingName.NotifyOnSuccessTemplate) ?? TemplateDefaults.NotifyOnSuccessTemplate;
-        message = replaceAll(message, "{{authorname}}", event.author.name);
-        message = replaceAll(message, "{{awardeeusername}}", parentComment.authorName);
+        message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
+        message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         const newComment = await context.reddit.submitComment({
             id: event.comment.id,
             text: message,
