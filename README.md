@@ -1,4 +1,4 @@
-ReputatorBot is a bot that allows users to award reputation points if a user has been helpful. It's main intention is to be used on help and advice subreddits to help indicate users who have a track record of helpful advice.
+ReputatorBot is a bot that allows users to award reputation points if a user has been helpful. It's main intention is to be used on help and advice subreddits to help indicate users who have a track record of providing useful solutions.
 
 It allows the OP of a post, a mod or a trusted user to reply to a user and award them a point using a bot command, which will be stored as their user flair. The command can be customisable (by default it is !thanks).
 
@@ -17,3 +17,5 @@ You may wish to create an automod rule that detects phrases like "thank you" and
 I strongly recommend using a command that is not going to be used in "normal" comments, to avoid awarding points accidentally. If you use a ! prefix e.g. !thanks, you will reduce the risk of accidental points awarding.
 
 I recommend testing settings out on a test subreddit before deploying to a real subreddit for the first time.
+
+This app is open source and licenced under the BSD 3-clause licence. You can find the source code [here](https://github.com/fsvreddit/reputatorbot).
