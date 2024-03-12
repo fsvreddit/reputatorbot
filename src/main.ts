@@ -1,10 +1,10 @@
 import {Devvit} from "@devvit/public-api";
 import {handleThanksEvent} from "./thanksPoints.js";
-import {settingsForThanksPoints} from "./settings.js";
+import {appSettings} from "./settings.js";
 import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
 import {updateLeaderboard} from "./leaderboard.js";
 
-Devvit.addSettings(settingsForThanksPoints);
+Devvit.addSettings(appSettings);
 
 Devvit.addTrigger({
     events: ["CommentSubmit", "CommentUpdate"],

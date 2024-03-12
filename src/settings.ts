@@ -59,7 +59,7 @@ function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): 
     }
 }
 
-export const settingsForThanksPoints: SettingsFormField[] = [
+export const appSettings: SettingsFormField[] = [
     {
         type: "group",
         label: "Reputation Points Settings",
