@@ -1,7 +1,8 @@
 import {Devvit} from "@devvit/public-api";
-import {handleThanksEvent, updateLeaderboard} from "./thanksPoints.js";
+import {handleThanksEvent} from "./thanksPoints.js";
 import {settingsForThanksPoints} from "./settings.js";
 import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
+import {updateLeaderboard} from "./leaderboard.js";
 
 Devvit.addSettings(settingsForThanksPoints);
 

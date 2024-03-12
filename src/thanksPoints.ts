@@ -1,11 +1,11 @@
-import {ScheduledJobEvent, TriggerContext, WikiPage, WikiPagePermissionLevel} from "@devvit/public-api";
+import {TriggerContext} from "@devvit/public-api";
 import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
 import {addWeeks} from "date-fns";
-import {ExistingFlairOverwriteHandling, LeaderboardMode, ReplyOptions, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
+import {ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
 import markdownEscape from "markdown-escape";
 
-const POINTS_STORE_KEY = "thanksPointsStore";
+export const POINTS_STORE_KEY = "thanksPointsStore";
 
 async function replyToUser (context: TriggerContext, replyMode: string, toUserName: string, messageBody: string, commentId: string) {
     if (replyMode === ReplyOptions.NoReply) {
@@ -204,65 +204,5 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         await replyToUser(context, notifyOnSuccess[0], event.author.name, message, event.comment.id);
-    }
-}
-
-export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerContext) {
-    const leaderboardMode = await context.settings.get<string[]>(ThanksPointsSettingName.LeaderboardMode);
-    if (!leaderboardMode || leaderboardMode.length === 0 || leaderboardMode[0] === LeaderboardMode.Off) {
-        return;
-    }
-
-    const wikiPageName = await context.settings.get<string>(ThanksPointsSettingName.LeaderboardWikiPage);
-    if (!wikiPageName) {
-        return;
-    }
-
-    const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, 20, {by: "rank", reverse: true});
-
-    const subredditName = await getSubredditName(context);
-
-    let wikiContents = `# ReputatorBot High Scores for ${subredditName}\n\nUser | Points Total\n-|-\n`;
-    wikiContents += highScores.map(score => `${markdownEscape(score.member)}|${score.score}`).join("\n");
-
-    wikiContents += "\n\nThe leaderboard shows the top 20 users who have been awarded at least one point";
-
-    const installDateTimestamp = await context.redis.get("InstallDate");
-    if (installDateTimestamp) {
-        const installDate = new Date(parseInt(installDateTimestamp));
-        wikiContents += ` since ${installDate.toUTCString()}`;
-    }
-
-    wikiContents += ". This page is updated once a day.";
-
-    let wikiPage: WikiPage | undefined;
-    try {
-        wikiPage = await context.reddit.getWikiPage(subredditName, wikiPageName);
-    } catch {
-        //
-    }
-
-    const wikiPageOptions = {
-        subredditName,
-        page: wikiPageName,
-        content: wikiContents,
-    };
-
-    if (wikiPage) {
-        await context.reddit.updateWikiPage(wikiPageOptions);
-    } else {
-        wikiPage = await context.reddit.createWikiPage(wikiPageOptions);
-    }
-
-    const correctPermissionLevel = leaderboardMode[0] === LeaderboardMode.Public ? WikiPagePermissionLevel.SUBREDDIT_PERMISSIONS : WikiPagePermissionLevel.MODS_ONLY;
-
-    const wikiPageSettings = await wikiPage.getSettings();
-    if (wikiPageSettings.permLevel !== correctPermissionLevel) {
-        await context.reddit.updateWikiPageSettings({
-            subredditName,
-            page: wikiPageName,
-            listed: true,
-            permLevel: correctPermissionLevel,
-        });
     }
 }
