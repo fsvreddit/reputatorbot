@@ -120,6 +120,9 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     let currentScore = 0;
     if (!userFlair || !userFlair.flairText || userFlair.flairText === "-") {
         newScore = 1;
+        if (userFlair && userFlair.flairText === "-") {
+            currentScore = 0;
+        }
     } else {
         currentScore = parseInt(userFlair.flairText);
         if (isNaN(currentScore)) {
