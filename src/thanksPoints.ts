@@ -44,7 +44,10 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     const parentComment = await context.reddit.getCommentById(event.comment.parentId);
 
-    if (parentComment.authorName === event.author.name) {
+    if (parentComment.authorId === context.appAccountId || parentComment.authorName === "AutoModerator") {
+        // Cannot award points to Automod or the app account
+        return;
+    } else if (parentComment.authorName === event.author.name) {
         console.log(`${event.comment.id}: points attempt by ${event.author.name} on their own comment`);
         const notifyOnError = await context.settings.get<boolean>(ThanksPointsSettingName.NotifyOnError);
         if (notifyOnError) {
