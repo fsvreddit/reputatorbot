@@ -14,6 +14,18 @@ export enum ThanksPointsSettingName {
     LeaderboardWikiPage = "leaderboardWikiPage",
 }
 
+export enum ReplyOptions {
+    NoReply = "none",
+    ReplyByPM = "replybypm",
+    ReplyAsComment = "replybycomment",
+}
+
+const replyOptionChoices = [
+    {label: "No Notification", value: ReplyOptions.NoReply},
+    {label: "Send user a private message", value: ReplyOptions.ReplyByPM},
+    {label: "Reply as comment", value: ReplyOptions.ReplyAsComment},
+];
+
 export enum LeaderboardMode {
     Off = "off",
     ModOnly = "modonly",
@@ -75,9 +87,11 @@ export const settingsForThanksPoints: SettingsFormField[] = [
             },
             {
                 name: ThanksPointsSettingName.NotifyOnError,
-                type: "boolean",
+                type: "select",
                 label: "Notify users by replying to their command if they try to award a point to themselves accidentally",
-                defaultValue: false,
+                options: replyOptionChoices,
+                multiSelect: false,
+                defaultValue: [ReplyOptions.NoReply],
             },
             {
                 name: ThanksPointsSettingName.NotifyOnErrorTemplate,
@@ -88,9 +102,11 @@ export const settingsForThanksPoints: SettingsFormField[] = [
             },
             {
                 name: ThanksPointsSettingName.NotifyOnSuccess,
-                type: "boolean",
+                type: "select",
                 label: "Notify users by replying to their command if their points command works",
-                defaultValue: false,
+                options: replyOptionChoices,
+                multiSelect: false,
+                defaultValue: [ReplyOptions.NoReply],
             },
             {
                 name: ThanksPointsSettingName.NotifyOnSuccessTemplate,

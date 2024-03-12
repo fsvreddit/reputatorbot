@@ -2,10 +2,33 @@ import {ScheduledJobEvent, TriggerContext, WikiPage, WikiPagePermissionLevel} fr
 import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
 import {addWeeks} from "date-fns";
-import {LeaderboardMode, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
+import {LeaderboardMode, ReplyOptions, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
 import markdownEscape from "markdown-escape";
 
 const POINTS_STORE_KEY = "thanksPointsStore";
+
+async function replyToUser (context: TriggerContext, replyMode: string, toUserName: string, messageBody: string, commentId: string) {
+    if (replyMode === ReplyOptions.NoReply) {
+        return;
+    } else if (replyMode === ReplyOptions.ReplyByPM) {
+        const subredditName = await getSubredditName(context);
+        await context.reddit.sendPrivateMessage({
+            subject: `Message from ReputatorBot on ${subredditName}`,
+            text: messageBody,
+            to: toUserName,
+        });
+    } else {
+        // Reply by comment
+        const newComment = await context.reddit.submitComment({
+            id: commentId,
+            text: messageBody,
+        });
+        await Promise.all([
+            newComment.distinguish(),
+            newComment.lock(),
+        ]);
+    }
+}
 
 export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, context: TriggerContext) {
     if (!event.comment || !event.post || !event.author || !event.subreddit) {
@@ -49,18 +72,11 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     } else if (parentComment.authorName === event.author.name) {
         console.log(`${event.comment.id}: points attempt by ${event.author.name} on their own comment`);
-        const notifyOnError = await context.settings.get<boolean>(ThanksPointsSettingName.NotifyOnError);
+        const notifyOnError = await context.settings.get<string[]>(ThanksPointsSettingName.NotifyOnError);
         if (notifyOnError) {
             let message = await context.settings.get<string>(ThanksPointsSettingName.NotifyOnErrorTemplate) ?? TemplateDefaults.NotifyOnErrorTemplate;
             message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
-            const newComment = await context.reddit.submitComment({
-                id: event.comment.id,
-                text: message,
-            });
-            await Promise.all([
-                newComment.distinguish(),
-                newComment.lock(),
-            ]);
+            await replyToUser(context, notifyOnError[0], event.author.name, message, event.comment.id);
         }
         return;
     } else {
@@ -130,19 +146,12 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     // Store the user's new score
     await context.redis.zAdd(POINTS_STORE_KEY, {member: parentComment.authorName, score: newScore});
 
-    const notifyOnSuccess = await context.settings.get<boolean>(ThanksPointsSettingName.NotifyOnSuccess);
+    const notifyOnSuccess = await context.settings.get<string[]>(ThanksPointsSettingName.NotifyOnSuccess);
     if (notifyOnSuccess) {
         let message = await context.settings.get<string>(ThanksPointsSettingName.NotifyOnSuccessTemplate) ?? TemplateDefaults.NotifyOnSuccessTemplate;
         message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
-        const newComment = await context.reddit.submitComment({
-            id: event.comment.id,
-            text: message,
-        });
-        await Promise.all([
-            newComment.distinguish(),
-            newComment.lock(),
-        ]);
+        await replyToUser(context, notifyOnSuccess[0], event.author.name, message, event.comment.id);
     }
 }
 
