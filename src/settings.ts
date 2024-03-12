@@ -1,6 +1,6 @@
 import {SettingsFormField, SettingsFormFieldValidatorEvent} from "@devvit/public-api";
 
-export enum ThanksPointsSettingName {
+export enum SettingName {
     ThanksCommand = "thanksCommand",
     ModThanksCommand = "modThanksCommand",
     AnyoneCanAwardPoints = "anyoneCanAwardPoints",
@@ -65,9 +65,9 @@ export const appSettings: SettingsFormField[] = [
         label: "Reputation Points Settings",
         fields: [
             {
-                name: ThanksPointsSettingName.ThanksCommand,
+                name: SettingName.ThanksCommand,
                 type: "string",
-                label: "Command for users to award points",
+                label: "Command for users to award reputation points",
                 defaultValue: "!thanks",
                 onValidate: ({value}) => {
                     if (!value) {
@@ -76,29 +76,30 @@ export const appSettings: SettingsFormField[] = [
                 },
             },
             {
-                name: ThanksPointsSettingName.ModThanksCommand,
+                name: SettingName.ModThanksCommand,
                 type: "string",
-                label: "Command for mods to award points",
+                label: "Alternate command for mods to award reputation points",
+                helpText: "Optional. Mods can always award points using the regular command.",
                 defaultValue: "!modthanks",
             },
             {
-                name: ThanksPointsSettingName.AnyoneCanAwardPoints,
+                name: SettingName.AnyoneCanAwardPoints,
                 type: "boolean",
                 label: "Allow any user to award points",
                 helpText: "If turned off, only the OP, mods and named trusted users may award points",
                 defaultValue: false,
             },
             {
-                name: ThanksPointsSettingName.SuperUsers,
+                name: SettingName.SuperUsers,
                 type: "string",
                 label: "A list of trusted users other than mods who can award points",
                 helpText: "Optional. Enter a comma-separated list of users who can award points in addition to OP",
             },
             {
-                name: ThanksPointsSettingName.ExcludedUsers,
+                name: SettingName.ExcludedUsers,
                 type: "string",
-                label: "Users who shouldn't have points awarded",
-                helpText: "Optional. Enter a comma-separated list of users who shouldn't have points awarded.",
+                label: "Users who shouldn't have points awarded to them",
+                helpText: "Optional. Enter a comma-separated list of users who shouldn't have points awarded to them.",
             },
         ],
     },
@@ -107,7 +108,7 @@ export const appSettings: SettingsFormField[] = [
         label: "Points Setting Options",
         fields: [
             {
-                name: ThanksPointsSettingName.ExistingFlairHandling,
+                name: SettingName.ExistingFlairHandling,
                 type: "select",
                 label: "Existing user flair handling",
                 options: [
@@ -118,20 +119,20 @@ export const appSettings: SettingsFormField[] = [
                 defaultValue: [ExistingFlairOverwriteHandling.OverwriteNumeric],
             },
             {
-                name: ThanksPointsSettingName.CSSClass,
+                name: SettingName.CSSClass,
                 type: "string",
                 label: "CSS class to use for points flairs",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
             },
             {
-                name: ThanksPointsSettingName.FlairTemplate,
+                name: SettingName.FlairTemplate,
                 type: "string",
                 label: "Flair template ID to use for points flairs",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
                 onValidate: isFlairTemplateValid,
             },
             {
-                name: ThanksPointsSettingName.NotifyOnError,
+                name: SettingName.NotifyOnError,
                 type: "select",
                 label: "Notify users by replying to their command if they try to award a point to themselves accidentally",
                 options: replyOptionChoices,
@@ -139,14 +140,14 @@ export const appSettings: SettingsFormField[] = [
                 defaultValue: [ReplyOptions.NoReply],
             },
             {
-                name: ThanksPointsSettingName.NotifyOnErrorTemplate,
+                name: SettingName.NotifyOnErrorTemplate,
                 type: "paragraph",
                 label: "Template of message sent when a user tries to award themselves a point",
                 helpText: "Placeholder supported: {{authorname}}",
                 defaultValue: TemplateDefaults.NotifyOnErrorTemplate,
             },
             {
-                name: ThanksPointsSettingName.NotifyOnSuccess,
+                name: SettingName.NotifyOnSuccess,
                 type: "select",
                 label: "Notify users by replying to their command if their points command works",
                 options: replyOptionChoices,
@@ -154,7 +155,7 @@ export const appSettings: SettingsFormField[] = [
                 defaultValue: [ReplyOptions.NoReply],
             },
             {
-                name: ThanksPointsSettingName.NotifyOnSuccessTemplate,
+                name: SettingName.NotifyOnSuccessTemplate,
                 type: "paragraph",
                 label: "Template of message sent when a user successfully awards a point",
                 helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}",
@@ -167,25 +168,25 @@ export const appSettings: SettingsFormField[] = [
         label: "Post Flair Setting Options",
         fields: [
             {
-                name: ThanksPointsSettingName.SetPostFlairOnThanks,
+                name: SettingName.SetPostFlairOnThanks,
                 type: "boolean",
                 label: "Set post flair when a reputation point is awarded",
                 helpText: "This can be used to mark a question as resolved, or answered",
                 defaultValue: false,
             },
             {
-                name: ThanksPointsSettingName.SetPostFlairText,
+                name: SettingName.SetPostFlairText,
                 type: "string",
                 label: "Post Flair Text",
             },
             {
-                name: ThanksPointsSettingName.SetPostFlairCSSClass,
+                name: SettingName.SetPostFlairCSSClass,
                 type: "string",
                 label: "Post Flair CSS Class",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
             },
             {
-                name: ThanksPointsSettingName.SetPostFlairTemplate,
+                name: SettingName.SetPostFlairTemplate,
                 type: "string",
                 label: "Post Flair Template ID",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
@@ -198,7 +199,7 @@ export const appSettings: SettingsFormField[] = [
         label: "Leaderboard Settings",
         fields: [
             {
-                name: ThanksPointsSettingName.LeaderboardMode,
+                name: SettingName.LeaderboardMode,
                 type: "select",
                 options: [
                     {label: "Off", value: LeaderboardMode.Off},
@@ -210,7 +211,7 @@ export const appSettings: SettingsFormField[] = [
                 defaultValue: [LeaderboardMode.Off],
             },
             {
-                name: ThanksPointsSettingName.LeaderboardWikiPage,
+                name: SettingName.LeaderboardWikiPage,
                 type: "string",
                 label: "Leaderboard Wiki Page",
                 defaultValue: "reputatorbotleaderboard",

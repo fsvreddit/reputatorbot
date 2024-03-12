@@ -2,7 +2,7 @@ import {TriggerContext} from "@devvit/public-api";
 import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
 import {addWeeks} from "date-fns";
-import {ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
+import {ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, SettingName} from "./settings.js";
 import markdownEscape from "markdown-escape";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
@@ -46,8 +46,8 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     }
 
     const [userCommand, modCommand] = await Promise.all([
-        context.settings.get<string>(ThanksPointsSettingName.ThanksCommand),
-        context.settings.get<string>(ThanksPointsSettingName.ModThanksCommand),
+        context.settings.get<string>(SettingName.ThanksCommand),
+        context.settings.get<string>(SettingName.ModThanksCommand),
     ]);
 
     // eslint-disable-next-line no-extra-parens
@@ -62,10 +62,10 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     if (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase()) && event.author.id !== event.post.authorId) {
         if (!isMod) {
-            const anyoneCanAwardPoints = await context.settings.get<boolean>(ThanksPointsSettingName.AnyoneCanAwardPoints);
+            const anyoneCanAwardPoints = await context.settings.get<boolean>(SettingName.AnyoneCanAwardPoints);
             if (!anyoneCanAwardPoints) {
                 console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
-                const superUserSetting = await context.settings.get<string>(ThanksPointsSettingName.SuperUsers);
+                const superUserSetting = await context.settings.get<string>(SettingName.SuperUsers);
                 if (!superUserSetting) {
                     return;
                 }
@@ -91,15 +91,15 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     } else if (parentComment.authorName === event.author.name) {
         console.log(`${event.comment.id}: points attempt by ${event.author.name} on their own comment`);
-        const notifyOnError = await context.settings.get<string[]>(ThanksPointsSettingName.NotifyOnError);
+        const notifyOnError = await context.settings.get<string[]>(SettingName.NotifyOnError);
         if (notifyOnError) {
-            let message = await context.settings.get<string>(ThanksPointsSettingName.NotifyOnErrorTemplate) ?? TemplateDefaults.NotifyOnErrorTemplate;
+            let message = await context.settings.get<string>(SettingName.NotifyOnErrorTemplate) ?? TemplateDefaults.NotifyOnErrorTemplate;
             message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
             await replyToUser(context, notifyOnError[0], event.author.name, message, event.comment.id);
         }
         return;
     } else {
-        const excludedUsersSetting = await context.settings.get<string>(ThanksPointsSettingName.ExcludedUsers);
+        const excludedUsersSetting = await context.settings.get<string>(SettingName.ExcludedUsers);
         if (excludedUsersSetting) {
             const excludedUsers = excludedUsersSetting.split(",").map(userName => userName.trim().toLowerCase());
             if (excludedUsers.includes(parentComment.authorName.toLowerCase())) {
@@ -136,19 +136,19 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         }
     }
 
-    const existingFlairOverwriteHandling = await context.settings.get<string[]>(ThanksPointsSettingName.ExistingFlairHandling);
+    const existingFlairOverwriteHandling = await context.settings.get<string[]>(SettingName.ExistingFlairHandling);
 
     const shouldSetUserFlair = !isNaN(currentScore) || existingFlairOverwriteHandling && existingFlairOverwriteHandling[0] === ExistingFlairOverwriteHandling.OverwriteAll;
 
     if (shouldSetUserFlair) {
         console.log(`${event.comment.id}: Setting points flair for ${parentCommentUser.username}. New score: ${newScore}`);
 
-        let cssClass = await context.settings.get<string>(ThanksPointsSettingName.CSSClass);
+        let cssClass = await context.settings.get<string>(SettingName.CSSClass);
         if (!cssClass) {
             cssClass = undefined;
         }
 
-        let flairTemplate = await context.settings.get<string>(ThanksPointsSettingName.FlairTemplate);
+        let flairTemplate = await context.settings.get<string>(SettingName.FlairTemplate);
         if (!flairTemplate) {
             flairTemplate = undefined;
         }
@@ -167,12 +167,12 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         });
     }
 
-    const shouldSetPostFlair = await context.settings.get<boolean>(ThanksPointsSettingName.SetPostFlairOnThanks);
+    const shouldSetPostFlair = await context.settings.get<boolean>(SettingName.SetPostFlairOnThanks);
     if (shouldSetPostFlair) {
         let [postFlairText, postFlairCSSClass, postFlairTemplate] = await Promise.all([
-            context.settings.get<string>(ThanksPointsSettingName.SetPostFlairText),
-            context.settings.get<string>(ThanksPointsSettingName.SetPostFlairCSSClass),
-            context.settings.get<string>(ThanksPointsSettingName.SetPostFlairTemplate),
+            context.settings.get<string>(SettingName.SetPostFlairText),
+            context.settings.get<string>(SettingName.SetPostFlairCSSClass),
+            context.settings.get<string>(SettingName.SetPostFlairTemplate),
         ]);
 
         if (!postFlairText) {
@@ -204,9 +204,9 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     // Store the user's new score
     await context.redis.zAdd(POINTS_STORE_KEY, {member: parentComment.authorName, score: newScore});
 
-    const notifyOnSuccess = await context.settings.get<string[]>(ThanksPointsSettingName.NotifyOnSuccess);
+    const notifyOnSuccess = await context.settings.get<string[]>(SettingName.NotifyOnSuccess);
     if (notifyOnSuccess) {
-        let message = await context.settings.get<string>(ThanksPointsSettingName.NotifyOnSuccessTemplate) ?? TemplateDefaults.NotifyOnSuccessTemplate;
+        let message = await context.settings.get<string>(SettingName.NotifyOnSuccessTemplate) ?? TemplateDefaults.NotifyOnSuccessTemplate;
         message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         await replyToUser(context, notifyOnSuccess[0], event.author.name, message, event.comment.id);

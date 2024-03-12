@@ -1,16 +1,16 @@
 import {ScheduledJobEvent, TriggerContext, WikiPage, WikiPagePermissionLevel} from "@devvit/public-api";
 import {getSubredditName} from "./utility.js";
-import {LeaderboardMode, ThanksPointsSettingName} from "./settings.js";
+import {LeaderboardMode, SettingName} from "./settings.js";
 import {POINTS_STORE_KEY} from "./thanksPoints.js";
 import markdownEscape from "markdown-escape";
 
 export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerContext) {
-    const leaderboardMode = await context.settings.get<string[]>(ThanksPointsSettingName.LeaderboardMode);
+    const leaderboardMode = await context.settings.get<string[]>(SettingName.LeaderboardMode);
     if (!leaderboardMode || leaderboardMode.length === 0 || leaderboardMode[0] === LeaderboardMode.Off) {
         return;
     }
 
-    const wikiPageName = await context.settings.get<string>(ThanksPointsSettingName.LeaderboardWikiPage);
+    const wikiPageName = await context.settings.get<string>(SettingName.LeaderboardWikiPage);
     if (!wikiPageName) {
         return;
     }
