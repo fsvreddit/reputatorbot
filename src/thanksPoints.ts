@@ -53,8 +53,11 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     }
 
     if (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase()) && event.author.id !== event.post.authorId) {
-        console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
-        return;
+        const anyoneCanAwardPoints = await context.settings.get<boolean>(ThanksPointsSettingName.AnyoneCanAwardPoints);
+        if (!anyoneCanAwardPoints) {
+            console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
+            return;
+        }
     }
 
     if (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase())) {
