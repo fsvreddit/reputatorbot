@@ -50,8 +50,6 @@ export enum TemplateDefaults {
     NotifyOnSuccessTemplate = "You have awarded 1 point to {{awardeeusername}}.\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
 }
 
-const wikiPageNameRegex = /^[\w/]+$/i;
-
 function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): void | string {
     const flairTemplateRegex = /^[0-9a-z]{8}(?:-[0-9a-z]{4}){4}[0-9a-z]{8}$/;
     if (event.value && !flairTemplateRegex.test(event.value)) {
@@ -216,6 +214,7 @@ export const appSettings: SettingsFormField[] = [
                 label: "Leaderboard Wiki Page",
                 defaultValue: "reputatorbotleaderboard",
                 onValidate: ({value}) => {
+                    const wikiPageNameRegex = /^[\w/]+$/i;
                     if (value && !wikiPageNameRegex.test(value)) {
                         return "Invalid wiki page name. Wiki page name must consist of alphanumeric characters and / characters only.";
                     }
