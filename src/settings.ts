@@ -52,7 +52,7 @@ export enum TemplateDefaults {
 
 const wikiPageNameRegex = /^[\w/]+$/i;
 
-function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): string | undefined {
+function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): void | string {
     const flairTemplateRegex = /^[0-9a-z]{8}(?:-[0-9a-z]{4}){4}[0-9a-z]{8}$/;
     if (event.value && !flairTemplateRegex.test(event.value)) {
         return "Invalid flair template ID";
