@@ -1,6 +1,7 @@
 import {Devvit} from "@devvit/public-api";
 import {handleThanksEvent, updateLeaderboard} from "./thanksPoints.js";
 import {settingsForThanksPoints} from "./settings.js";
+import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
 
 Devvit.addSettings(settingsForThanksPoints);
 
@@ -11,27 +12,12 @@ Devvit.addTrigger({
 
 Devvit.addTrigger({
     event: "AppInstall",
-    onEvent: async (_, context) => {
-        await context.redis.set("InstallDate", new Date().getTime().toString());
-    },
+    onEvent: onAppFirstInstall,
 });
 
 Devvit.addTrigger({
     events: ["AppInstall", "AppUpgrade"],
-    onEvent: async (_, context) => {
-        const currentJobs = await context.scheduler.listJobs();
-        await Promise.all(currentJobs.map(job => context.scheduler.cancelJob(job.id)));
-
-        await context.scheduler.runJob({
-            name: "updateLeaderboard",
-            cron: "0 0 * * *",
-        });
-
-        await context.scheduler.runJob({
-            name: "updateLeaderboard",
-            runAt: new Date(),
-        });
-    },
+    onEvent: onAppInstallOrUpgrade,
 });
 
 Devvit.addSchedulerJob({
