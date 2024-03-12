@@ -6,6 +6,8 @@ export enum ThanksPointsSettingName {
     AnyoneCanAwardPoints = "anyoneCanAwardPoints",
     SuperUsers = "superUsers",
     ExcludedUsers = "excludedUsers",
+    ExistingFlairHandling = "existingFlairHandling",
+    ExistingFlairCosmeticHandling = "existingFlairCosmeticHandling",
     CSSClass = "thanksCSSClass",
     FlairTemplate = "thanksFlairTemplate",
     NotifyOnError = "notifyOnError",
@@ -18,6 +20,11 @@ export enum ThanksPointsSettingName {
     SetPostFlairTemplate = "setPostFlairOnThanksTemplate",
     LeaderboardMode = "leaderboardMode",
     LeaderboardWikiPage = "leaderboardWikiPage",
+}
+
+export enum ExistingFlairOverwriteHandling {
+    OverwriteNumeric = "overwritenumeric",
+    OverwriteAll = "overwriteall",
 }
 
 export enum ReplyOptions {
@@ -93,6 +100,17 @@ export const settingsForThanksPoints: SettingsFormField[] = [
         label: "Points Setting Options",
         fields: [
             {
+                name: ThanksPointsSettingName.ExistingFlairHandling,
+                type: "select",
+                label: "Existing user flair handling",
+                options: [
+                    {label: "Overwrite Numeric Only", value: ExistingFlairOverwriteHandling.OverwriteNumeric},
+                    {label: "Overwrite Any Flair", value: ExistingFlairOverwriteHandling.OverwriteAll},
+                ],
+                multiSelect: false,
+                defaultValue: [ExistingFlairOverwriteHandling.OverwriteNumeric],
+            },
+            {
                 name: ThanksPointsSettingName.CSSClass,
                 type: "string",
                 label: "CSS class to use for points flairs",
@@ -138,7 +156,7 @@ export const settingsForThanksPoints: SettingsFormField[] = [
     },
     {
         type: "group",
-        label: "Flair Setting Options",
+        label: "Post Flair Setting Options",
         fields: [
             {
                 name: ThanksPointsSettingName.SetPostFlairOnThanks,

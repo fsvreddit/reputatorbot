@@ -2,7 +2,7 @@ import {ScheduledJobEvent, TriggerContext, WikiPage, WikiPagePermissionLevel} fr
 import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
 import {addWeeks} from "date-fns";
-import {LeaderboardMode, ReplyOptions, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
+import {ExistingFlairOverwriteHandling, LeaderboardMode, ReplyOptions, TemplateDefaults, ThanksPointsSettingName} from "./settings.js";
 import markdownEscape from "markdown-escape";
 
 const POINTS_STORE_KEY = "thanksPointsStore";
@@ -117,41 +117,49 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const parentCommentUser = await parentComment.getAuthor();
     const userFlair = await parentCommentUser.getUserFlairBySubreddit(parentComment.subredditName);
 
+    let currentScore = 0;
     if (!userFlair || !userFlair.flairText || userFlair.flairText === "-") {
         newScore = 1;
     } else {
-        const currentScore = parseInt(userFlair.flairText);
+        currentScore = parseInt(userFlair.flairText);
         if (isNaN(currentScore)) {
             console.log(`${event.comment.id}: Existing flair for ${parentCommentUser.username} isn't a number. Can't award points.`);
-            return;
+            newScore = 1;
+        } else {
+            newScore = currentScore + 1;
         }
-        newScore = currentScore + 1;
     }
 
-    console.log(`${event.comment.id}: Setting points flair for ${parentCommentUser.username}. New score: ${newScore}`);
+    const existingFlairOverwriteHandling = await context.settings.get<string[]>(ThanksPointsSettingName.ExistingFlairHandling);
 
-    let cssClass = await context.settings.get<string>(ThanksPointsSettingName.CSSClass);
-    if (!cssClass) {
-        cssClass = undefined;
+    const shouldSetUserFlair = !isNaN(currentScore) || existingFlairOverwriteHandling && existingFlairOverwriteHandling[0] === ExistingFlairOverwriteHandling.OverwriteAll;
+
+    if (shouldSetUserFlair) {
+        console.log(`${event.comment.id}: Setting points flair for ${parentCommentUser.username}. New score: ${newScore}`);
+
+        let cssClass = await context.settings.get<string>(ThanksPointsSettingName.CSSClass);
+        if (!cssClass) {
+            cssClass = undefined;
+        }
+
+        let flairTemplate = await context.settings.get<string>(ThanksPointsSettingName.FlairTemplate);
+        if (!flairTemplate) {
+            flairTemplate = undefined;
+        }
+
+        if (flairTemplate && cssClass) {
+            // Prioritise flair templates over CSS classes.
+            cssClass = undefined;
+        }
+
+        await context.reddit.setUserFlair({
+            subredditName: parentComment.subredditName,
+            username: parentCommentUser.username,
+            cssClass,
+            flairTemplateId: flairTemplate,
+            text: newScore.toString(),
+        });
     }
-
-    let flairTemplate = await context.settings.get<string>(ThanksPointsSettingName.FlairTemplate);
-    if (!flairTemplate) {
-        flairTemplate = undefined;
-    }
-
-    if (flairTemplate && cssClass) {
-        // Prioritise flair templates over CSS classes.
-        cssClass = undefined;
-    }
-
-    await context.reddit.setUserFlair({
-        subredditName: parentComment.subredditName,
-        username: parentCommentUser.username,
-        cssClass,
-        flairTemplateId: flairTemplate,
-        text: newScore.toString(),
-    });
 
     const shouldSetPostFlair = await context.settings.get<boolean>(ThanksPointsSettingName.SetPostFlairOnThanks);
     if (shouldSetPostFlair) {
