@@ -4,6 +4,7 @@ export enum ThanksPointsSettingName {
     ThanksCommand = "thanksCommand",
     ModThanksCommand = "modThanksCommand",
     AnyoneCanAwardPoints = "anyoneCanAwardPoints",
+    SuperUsers = "superUsers",
     ExcludedUsers = "excludedUsers",
     CSSClass = "thanksCSSClass",
     FlairTemplate = "thanksFlairTemplate",
@@ -68,6 +69,12 @@ export const settingsForThanksPoints: SettingsFormField[] = [
                 label: "Allow any user to award points",
                 helpText: "If turned off, only the OP, mods and superusers may award points",
                 defaultValue: false,
+            },
+            {
+                name: ThanksPointsSettingName.SuperUsers,
+                type: "string",
+                label: "A list of trusted users other than mods who can award points",
+                helpText: "Optional. Enter a comma-separated list of users who can award points in addition to OP",
             },
             {
                 name: ThanksPointsSettingName.ExcludedUsers,

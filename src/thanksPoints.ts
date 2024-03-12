@@ -56,7 +56,16 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         const anyoneCanAwardPoints = await context.settings.get<boolean>(ThanksPointsSettingName.AnyoneCanAwardPoints);
         if (!anyoneCanAwardPoints) {
             console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
-            return;
+            const superUserSetting = await context.settings.get<string>(ThanksPointsSettingName.SuperUsers);
+            if (!superUserSetting) {
+                return;
+            }
+
+            const superUsers = superUserSetting.split(",").map(user => user.trim().toLowerCase());
+            if (!superUsers.includes(event.author.name.toLowerCase())) {
+                console.log(`${event.comment.id}: Additionally, user is not a superuser`);
+                return;
+            }
         }
     }
 
