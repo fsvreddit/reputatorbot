@@ -103,7 +103,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         }
     }
 
-    const redisKey = `thanks-${parentComment.id}`;
+    const redisKey = `thanks-${parentComment.id}-${event.author.name}`;
 
     // Check to see if the given comment has already been thanked.
     const alreadyThanked = await context.redis.get(redisKey);
@@ -152,6 +152,37 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         flairTemplateId: flairTemplate,
         text: newScore.toString(),
     });
+
+    const shouldSetPostFlair = await context.settings.get<boolean>(ThanksPointsSettingName.SetPostFlairOnThanks);
+    if (shouldSetPostFlair) {
+        let [postFlairText, postFlairCSSClass, postFlairTemplate] = await Promise.all([
+            context.settings.get<string>(ThanksPointsSettingName.SetPostFlairText),
+            context.settings.get<string>(ThanksPointsSettingName.SetPostFlairCSSClass),
+            context.settings.get<string>(ThanksPointsSettingName.SetPostFlairTemplate),
+        ]);
+
+        if (!postFlairText) {
+            postFlairText = undefined;
+        }
+        if (!postFlairCSSClass || postFlairTemplate) {
+            postFlairCSSClass = undefined;
+        }
+        if (!postFlairTemplate) {
+            postFlairTemplate = undefined;
+        }
+
+        if (postFlairText || postFlairTemplate) {
+            await context.reddit.setPostFlair({
+                postId: event.post.id,
+                subredditName: parentComment.subredditName,
+                text: postFlairText,
+                cssClass: postFlairCSSClass,
+                flairTemplateId: postFlairTemplate,
+            });
+
+            console.log(`${event.comment.id}: Set post flair.`);
+        }
+    }
 
     const now = new Date();
     await context.redis.set(redisKey, now.getTime().toString(), {expiration: addWeeks(now, 1)});

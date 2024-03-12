@@ -12,6 +12,10 @@ export enum ThanksPointsSettingName {
     NotifyOnErrorTemplate = "notifyOnErrorTemplate",
     NotifyOnSuccess = "notifyOnSuccess",
     NotifyOnSuccessTemplate = "notifyOnSuccessTemplate",
+    SetPostFlairOnThanks = "setPostFlairOnThanks",
+    SetPostFlairText = "setPostFlairOnThanksText",
+    SetPostFlairCSSClass = "setPostFlairOnThanksCSSClass",
+    SetPostFlairTemplate = "setPostFlairOnThanksTemplate",
     LeaderboardMode = "leaderboardMode",
     LeaderboardWikiPage = "leaderboardWikiPage",
 }
@@ -129,6 +133,36 @@ export const settingsForThanksPoints: SettingsFormField[] = [
                 label: "Template of message sent when a user successfully awards a point",
                 helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}",
                 defaultValue: TemplateDefaults.NotifyOnSuccessTemplate,
+            },
+        ],
+    },
+    {
+        type: "group",
+        label: "Flair Setting Options",
+        fields: [
+            {
+                name: ThanksPointsSettingName.SetPostFlairOnThanks,
+                type: "boolean",
+                label: "Set post flair when a reputation point is awarded",
+                helpText: "This can be used to mark a question as resolved, or answered",
+                defaultValue: false,
+            },
+            {
+                name: ThanksPointsSettingName.SetPostFlairText,
+                type: "string",
+                label: "Post Flair Text",
+            },
+            {
+                name: ThanksPointsSettingName.SetPostFlairCSSClass,
+                type: "string",
+                label: "Post Flair CSS Class",
+                helpText: "Optional. Please choose either a CSS class or flair template, not both.",
+            },
+            {
+                name: ThanksPointsSettingName.SetPostFlairTemplate,
+                type: "string",
+                label: "Post Flair Template ID",
+                helpText: "Optional. Please choose either a CSS class or flair template, not both.",
             },
         ],
     },
