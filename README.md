@@ -14,4 +14,6 @@ Suggestions:
 
 You may wish to create an automod rule that detects phrases like "thank you" and similar in comments that do not have the trigger command, and reply suggesting that they use the command.
 
-I strongly recommend using a command that is not going to be used in "normal" comments, to avoid awarding points accidentally.
+I strongly recommend using a command that is not going to be used in "normal" comments, to avoid awarding points accidentally. If you use a ! prefix e.g. !thanks, you will reduce the risk of accidental points awarding.
+
+I recommend testing settings out on a test subreddit before deploying to a real subreddit for the first time.
