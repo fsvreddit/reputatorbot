@@ -63,6 +63,15 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
             ]);
         }
         return;
+    } else {
+        const excludedUsersSetting = await context.settings.get<string>(ThanksPointsSettingName.ExcludedUsers);
+        if (excludedUsersSetting) {
+            const excludedUsers = excludedUsersSetting.split(",").map(userName => userName.trim().toLowerCase());
+            if (excludedUsers.includes(parentComment.authorName.toLowerCase())) {
+                console.log(`${event.post.id}: User ${parentComment.authorName} is on the exclusion list.`);
+                return;
+            }
+        }
     }
 
     const redisKey = `thanks-${parentComment.id}`;

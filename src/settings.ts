@@ -3,6 +3,7 @@ import {SettingsFormField} from "@devvit/public-api";
 export enum ThanksPointsSettingName {
     ThanksCommand = "thanksCommand",
     ModThanksCommand = "modThanksCommand",
+    ExcludedUsers = "excludedUsers",
     CSSClass = "thanksCSSClass",
     FlairTemplate = "thanksFlairTemplate",
     NotifyOnError = "notifyOnError",
@@ -43,6 +44,12 @@ export const settingsForThanksPoints: SettingsFormField[] = [
         type: "string",
         label: "Command for mods to award points",
         defaultValue: "!modthanks",
+    },
+    {
+        name: ThanksPointsSettingName.ExcludedUsers,
+        type: "string",
+        label: "Users who shouldn't have points awarded",
+        helpText: "Optional. Enter a comma-separated list of users who shouldn't have points awarded.",
     },
     {
         name: ThanksPointsSettingName.CSSClass,
