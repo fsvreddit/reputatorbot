@@ -12,11 +12,15 @@ async function replyToUser (context: TriggerContext, replyMode: string, toUserNa
         return;
     } else if (replyMode === ReplyOptions.ReplyByPM) {
         const subredditName = await getSubredditName(context);
-        await context.reddit.sendPrivateMessage({
-            subject: `Message from ReputatorBot on ${subredditName}`,
-            text: messageBody,
-            to: toUserName,
-        });
+        try {
+            await context.reddit.sendPrivateMessage({
+                subject: `Message from ReputatorBot on ${subredditName}`,
+                text: messageBody,
+                to: toUserName,
+            });
+        } catch {
+            console.log(`Error sending PM notification to ${toUserName}. User may only allow PMs from whitelisted users.`);
+        }
     } else {
         // Reply by comment
         const newComment = await context.reddit.submitComment({
@@ -51,6 +55,8 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     if (!commentContainsCommand) {
         return;
     }
+
+    console.log(`${event.comment.id}: Comment contains a reputation points command.`);
 
     const isMod = await isModerator(context, event.subreddit.name, event.author.name);
 
