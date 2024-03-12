@@ -1,4 +1,4 @@
-import {SettingsFormField} from "@devvit/public-api";
+import {SettingsFormField, SettingsFormFieldValidatorEvent} from "@devvit/public-api";
 
 export enum ThanksPointsSettingName {
     ThanksCommand = "thanksCommand",
@@ -52,6 +52,13 @@ export enum TemplateDefaults {
 
 const wikiPageNameRegex = /^[\w/]+$/i;
 
+function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): string | undefined {
+    const flairTemplateRegex = /^[0-9a-z]{8}(?:-[0-9a-z]{4}){4}[0-9a-z]{8}$/;
+    if (event.value && !flairTemplateRegex.test(event.value)) {
+        return "Invalid flair template ID";
+    }
+}
+
 export const settingsForThanksPoints: SettingsFormField[] = [
     {
         type: "group",
@@ -78,7 +85,7 @@ export const settingsForThanksPoints: SettingsFormField[] = [
                 name: ThanksPointsSettingName.AnyoneCanAwardPoints,
                 type: "boolean",
                 label: "Allow any user to award points",
-                helpText: "If turned off, only the OP, mods and superusers may award points",
+                helpText: "If turned off, only the OP, mods and named trusted users may award points",
                 defaultValue: false,
             },
             {
@@ -121,6 +128,7 @@ export const settingsForThanksPoints: SettingsFormField[] = [
                 type: "string",
                 label: "Flair template ID to use for points flairs",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
+                onValidate: isFlairTemplateValid,
             },
             {
                 name: ThanksPointsSettingName.NotifyOnError,
@@ -181,6 +189,7 @@ export const settingsForThanksPoints: SettingsFormField[] = [
                 type: "string",
                 label: "Post Flair Template ID",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
+                onValidate: isFlairTemplateValid,
             },
         ],
     },
