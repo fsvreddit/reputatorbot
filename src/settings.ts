@@ -48,13 +48,13 @@ export const settingsForThanksPoints: SettingsFormField[] = [
         name: ThanksPointsSettingName.CSSClass,
         type: "string",
         label: "CSS class to use for points flairs",
-        helpText: "Please choose either a CSS class or flair template, not both.",
+        helpText: "Optional. Please choose either a CSS class or flair template, not both.",
     },
     {
         name: ThanksPointsSettingName.FlairTemplate,
         type: "string",
         label: "Flair template ID to use for points flairs",
-        helpText: "Please choose either a CSS class or flair template, not both.",
+        helpText: "Optional. Please choose either a CSS class or flair template, not both.",
     },
     {
         name: ThanksPointsSettingName.NotifyOnError,
