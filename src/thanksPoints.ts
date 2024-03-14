@@ -89,6 +89,15 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         }
     }
 
+    const usersWhoCantAwardPointsSetting = await context.settings.get<string>(SettingName.UsersWhoCannotAwardPoints);
+    if (usersWhoCantAwardPointsSetting) {
+        const usersWhoCantAwardPoints = usersWhoCantAwardPointsSetting.split(",").map(user => user.trim().toLowerCase());
+        if (usersWhoCantAwardPoints.includes(event.author.name.toLowerCase())) {
+            console.log(`${event.comment.id}: ${event.author.name} is not permitted to award points.`);
+            return;
+        }
+    }
+
     const parentComment = await context.reddit.getCommentById(event.comment.parentId);
 
     if (parentComment.authorId === context.appAccountId || parentComment.authorName === "AutoModerator") {
@@ -104,7 +113,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         }
         return;
     } else {
-        const excludedUsersSetting = await context.settings.get<string>(SettingName.ExcludedUsers);
+        const excludedUsersSetting = await context.settings.get<string>(SettingName.UsersWhoCannotBeAwardedPoints);
         if (excludedUsersSetting) {
             const excludedUsers = excludedUsersSetting.split(",").map(userName => userName.trim().toLowerCase());
             if (excludedUsers.includes(parentComment.authorName.toLowerCase())) {
