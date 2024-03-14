@@ -45,6 +45,11 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     }
 
+    if (event.author.id === context.appAccountId || event.author.name === "AutoModerator") {
+        // Prevent bot account or Automod granting points
+        return;
+    }
+
     const [userCommand, modCommand] = await Promise.all([
         context.settings.get<string>(SettingName.ThanksCommand),
         context.settings.get<string>(SettingName.ModThanksCommand),
