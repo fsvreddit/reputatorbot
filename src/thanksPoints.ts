@@ -66,20 +66,18 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const isMod = await isModerator(context, event.subreddit.name, event.author.name);
 
     if (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase()) && event.author.id !== event.post.authorId) {
-        if (!isMod) {
-            const anyoneCanAwardPoints = await context.settings.get<boolean>(SettingName.AnyoneCanAwardPoints);
-            if (!anyoneCanAwardPoints) {
-                console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
-                const superUserSetting = await context.settings.get<string>(SettingName.SuperUsers);
-                if (!superUserSetting) {
-                    return;
-                }
+        const anyoneCanAwardPoints = await context.settings.get<boolean>(SettingName.AnyoneCanAwardPoints);
+        if (!anyoneCanAwardPoints) {
+            console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
+            const superUserSetting = await context.settings.get<string>(SettingName.SuperUsers);
+            if (!superUserSetting) {
+                return;
+            }
 
-                const superUsers = superUserSetting.split(",").map(user => user.trim().toLowerCase());
-                if (!superUsers.includes(event.author.name.toLowerCase())) {
-                    console.log(`${event.comment.id}: Additionally, user is not a superuser`);
-                    return;
-                }
+            const superUsers = superUserSetting.split(",").map(user => user.trim().toLowerCase());
+            if (!superUsers.includes(event.author.name.toLowerCase())) {
+                console.log(`${event.comment.id}: Additionally, user is not a superuser`);
+                return;
             }
         }
     } else if (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase())) {
