@@ -5,12 +5,14 @@ import {POINTS_STORE_KEY} from "./thanksPoints.js";
 import markdownEscape from "markdown-escape";
 
 export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerContext) {
-    const leaderboardMode = await context.settings.get<string[]>(SettingName.LeaderboardMode);
+    const settings = await context.settings.getAll();
+
+    const leaderboardMode = settings[SettingName.LeaderboardMode] as string[] | undefined;
     if (!leaderboardMode || leaderboardMode.length === 0 || leaderboardMode[0] === LeaderboardMode.Off) {
         return;
     }
 
-    const wikiPageName = await context.settings.get<string>(SettingName.LeaderboardWikiPage);
+    const wikiPageName = settings[SettingName.LeaderboardWikiPage] as string | undefined;
     if (!wikiPageName) {
         return;
     }

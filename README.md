@@ -19,3 +19,9 @@ I strongly recommend using a command that is not going to be used in "normal" co
 I recommend testing settings out on a test subreddit before deploying to a real subreddit for the first time.
 
 This app is open source and licenced under the BSD 3-clause licence. You can find the source code [here](https://github.com/fsvreddit/reputatorbot).
+
+Changes in version 1.1:
+
+* You can now use the placeholder {{permalink}} in replies when you award a point or try and self-award.
+* Super users must now use the mod command, not the command that the OP would use. This allows super users to remind people how to award points without accidentally awarding one themselves.
+* You can now set a points threshold for users to be automatically considered "trusted".
