@@ -29,6 +29,7 @@ export enum SettingName {
 export enum ExistingFlairOverwriteHandling {
     OverwriteNumeric = "overwritenumeric",
     OverwriteAll = "overwriteall",
+    NeverSet = "neverset",
 }
 
 export enum ReplyOptions {
@@ -59,6 +60,12 @@ function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): 
     const flairTemplateRegex = /^[0-9a-z]{8}(?:-[0-9a-z]{4}){4}[0-9a-z]{8}$/;
     if (event.value && !flairTemplateRegex.test(event.value)) {
         return "Invalid flair template ID";
+    }
+}
+
+function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>): void | string {
+    if (!event.value || event.value.length !== 1) {
+        return "You must choose an option";
     }
 }
 
@@ -111,6 +118,7 @@ export const appSettings: SettingsFormField[] = [
                 options: replyOptionChoices,
                 multiSelect: false,
                 defaultValue: [ReplyOptions.NoReply],
+                onValidate: selectFieldHasOptionChosen,
             },
             {
                 name: SettingName.NotifyOnAutoSuperuserTemplate,
@@ -140,13 +148,15 @@ export const appSettings: SettingsFormField[] = [
             {
                 name: SettingName.ExistingFlairHandling,
                 type: "select",
-                label: "Existing user flair handling",
+                label: "Flair setting option",
                 options: [
-                    {label: "Overwrite Numeric Only", value: ExistingFlairOverwriteHandling.OverwriteNumeric},
-                    {label: "Overwrite Any Flair", value: ExistingFlairOverwriteHandling.OverwriteAll},
+                    {label: "Set flair to new score, if flair unset or flair is numeric", value: ExistingFlairOverwriteHandling.OverwriteNumeric},
+                    {label: "Set flair to new score, if user has no flair", value: ExistingFlairOverwriteHandling.OverwriteAll},
+                    {label: "Never set flair", value: ExistingFlairOverwriteHandling.NeverSet},
                 ],
                 multiSelect: false,
                 defaultValue: [ExistingFlairOverwriteHandling.OverwriteNumeric],
+                onValidate: selectFieldHasOptionChosen,
             },
             {
                 name: SettingName.CSSClass,
@@ -168,6 +178,7 @@ export const appSettings: SettingsFormField[] = [
                 options: replyOptionChoices,
                 multiSelect: false,
                 defaultValue: [ReplyOptions.NoReply],
+                onValidate: selectFieldHasOptionChosen,
             },
             {
                 name: SettingName.NotifyOnErrorTemplate,
@@ -183,12 +194,13 @@ export const appSettings: SettingsFormField[] = [
                 options: replyOptionChoices,
                 multiSelect: false,
                 defaultValue: [ReplyOptions.NoReply],
+                onValidate: selectFieldHasOptionChosen,
             },
             {
                 name: SettingName.NotifyOnSuccessTemplate,
                 type: "paragraph",
                 label: "Template of message sent when a user successfully awards a point",
-                helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}",
+                helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
                 defaultValue: TemplateDefaults.NotifyOnSuccessTemplate,
             },
         ],
@@ -239,6 +251,7 @@ export const appSettings: SettingsFormField[] = [
                 label: "Leaderboard Mode",
                 multiSelect: false,
                 defaultValue: [LeaderboardMode.Off],
+                onValidate: selectFieldHasOptionChosen,
             },
             {
                 name: SettingName.LeaderboardWikiPage,
