@@ -1,9 +1,10 @@
 import {TriggerContext, User} from "@devvit/public-api";
 import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
-import {addWeeks} from "date-fns";
+import {addDays, addWeeks} from "date-fns";
 import {ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, SettingName} from "./settings.js";
 import markdownEscape from "markdown-escape";
+import {CLEANUP_LOG_KEY} from "./cleanupTasks.js";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
 
@@ -184,6 +185,8 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     console.log(`${event.comment.id}: New score for ${parentComment.authorName} is ${newScore}`);
     // Store the user's new score
     await context.redis.zAdd(POINTS_STORE_KEY, {member: parentComment.authorName, score: newScore});
+    // Queue user for cleanup checks in 24 hours, overwriting existing value.
+    await context.redis.zAdd(CLEANUP_LOG_KEY, {member: parentComment.authorName, score: addDays(new Date(), 1).getTime()});
 
     // Check to see if user has reached the superuser threshold.
     const autoSuperuserThreshold = settings[SettingName.AutoSuperuserThreshold] as number ?? 0;

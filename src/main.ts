@@ -3,6 +3,7 @@ import {handleThanksEvent} from "./thanksPoints.js";
 import {appSettings} from "./settings.js";
 import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
 import {updateLeaderboard} from "./leaderboard.js";
+import {cleanupDeletedAccounts} from "./cleanupTasks.js";
 
 Devvit.addSettings(appSettings);
 
@@ -24,6 +25,11 @@ Devvit.addTrigger({
 Devvit.addSchedulerJob({
     name: "updateLeaderboard",
     onRun: updateLeaderboard,
+});
+
+Devvit.addSchedulerJob({
+    name: "cleanupDeletedAccounts",
+    onRun: cleanupDeletedAccounts,
 });
 
 Devvit.configure({
