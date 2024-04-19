@@ -16,12 +16,12 @@ export async function onAppInstallOrUpgrade (_: AppInstall | AppUpgrade, context
     });
 
     // Cleanup job should run every 30 minutes, but not at minute zero, to avoid clashes with leaderboard job.
-    const minute = 1 + Math.floor(Math.random() * 29);
-    console.log(`Running cleanup job at ${minute} and ${minute + 30} past the hour.`);
+    const minute = 1 + Math.floor(Math.random() * 9);
+    console.log(`Running cleanup job every 10 minutes starting at ${minute} past the hour.`);
 
     await context.scheduler.runJob({
         name: "cleanupDeletedAccounts",
-        cron: `${minute}/${30} * * * *`,
+        cron: `${minute}/${10} * * * *`,
     });
 
     await populateCleanupLog(context);

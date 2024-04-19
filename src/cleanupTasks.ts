@@ -36,8 +36,16 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
         return;
     }
 
-    // Get the first 50 accounts that are due a check.
-    const usersToCheck = items.slice(0, 50).map(item => item.member);
+    const itemsToCheck = 50;
+
+    if (items.length > itemsToCheck) {
+        console.log(`Cleanup: ${items.length} accounts are due a check. Checking first ${itemsToCheck} in this run.`);
+    } else {
+        console.log(`Cleanup: ${items.length} accounts are due a check.`);
+    }
+
+    // Get the first N accounts that are due a check.
+    const usersToCheck = items.slice(0, itemsToCheck).map(item => item.member);
     const userStatuses: UserActive[] = [];
 
     for (const username of usersToCheck) {
