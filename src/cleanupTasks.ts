@@ -2,7 +2,6 @@ import {ScheduledJobEvent, TriggerContext, ZMember} from "@devvit/public-api";
 import {addDays} from "date-fns";
 import {POINTS_STORE_KEY} from "./thanksPoints.js";
 
-export const CLEANUP_LOG_POPULATED = "cleanupLogPopulated";
 export const CLEANUP_LOG_KEY = "cleanupStore";
 
 async function userActive (username: string, context: TriggerContext): Promise<boolean> {
@@ -67,5 +66,27 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
             name: "updateLeaderboard",
             runAt: new Date(),
         });
+    }
+}
+
+/**
+ * Removes cleanup log entries for users without scores, and populates cleanup log entries for users with
+ * scores who are not yet in the cleanup log
+ */
+export async function populateCleanupLog (context: TriggerContext) {
+    const existingScoreUsers = (await context.redis.zRange(POINTS_STORE_KEY, 0, -1)).map(score => score.member);
+    const cleanupLogUsers = (await context.redis.zRange(CLEANUP_LOG_KEY, 0, -1)).map(score => score.member);
+
+    const existingScoreUsersWithoutCleanup = existingScoreUsers.filter(username => !cleanupLogUsers.includes(username));
+
+    if (existingScoreUsersWithoutCleanup.length > 0) {
+        await context.redis.zAdd(CLEANUP_LOG_KEY, ...existingScoreUsersWithoutCleanup.map(username => <ZMember>{member: username, score: 0}));
+        console.log(`OnUpgradeCleanupTasks: Stored records of ${existingScoreUsers.length} users for future cleanup.`);
+    }
+
+    const cleanupLogUsersWithoutScores = cleanupLogUsers.filter(username => !existingScoreUsers.includes(username));
+    if (cleanupLogUsersWithoutScores.length > 0) {
+        await context.redis.zRem(CLEANUP_LOG_KEY, cleanupLogUsersWithoutScores);
+        console.log(`OnUpgradeCleanupTasks: Removed records of ${existingScoreUsers.length} from cleanup log who don't have scores.`);
     }
 }
