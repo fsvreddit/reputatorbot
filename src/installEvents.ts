@@ -21,7 +21,7 @@ export async function onAppInstallOrUpgrade (_: AppInstall | AppUpgrade, context
 
     await context.scheduler.runJob({
         name: "cleanupDeletedAccounts",
-        cron: `${minute}/${10} * * * *`,
+        cron: `${minute}/10 * * * *`,
     });
 
     await populateCleanupLog(context);
