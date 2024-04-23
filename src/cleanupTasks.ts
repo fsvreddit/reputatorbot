@@ -73,6 +73,7 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
         await context.scheduler.runJob({
             name: "updateLeaderboard",
             runAt: new Date(),
+            data: {reason: "One or more deleted accounts purged"},
         });
     }
 }

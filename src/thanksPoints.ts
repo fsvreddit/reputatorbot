@@ -192,6 +192,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     await context.scheduler.runJob({
         name: "updateLeaderboard",
         runAt: new Date(),
+        data: {reason: `Awarded a point to ${parentComment.authorName}`},
     });
 
     // Check to see if user has reached the superuser threshold.

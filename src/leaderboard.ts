@@ -4,7 +4,7 @@ import {LeaderboardMode, SettingName} from "./settings.js";
 import {POINTS_STORE_KEY} from "./thanksPoints.js";
 import markdownEscape from "markdown-escape";
 
-export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerContext) {
+export async function updateLeaderboard (event: ScheduledJobEvent, context: TriggerContext) {
     const settings = await context.settings.getAll();
 
     const leaderboardMode = settings[SettingName.LeaderboardMode] as string[] | undefined;
@@ -45,6 +45,7 @@ export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerC
         subredditName,
         page: wikiPageName,
         content: wikiContents,
+        reason: event.data?.reason as string | undefined,
     };
 
     if (wikiPage) {
