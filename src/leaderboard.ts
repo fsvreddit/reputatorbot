@@ -32,7 +32,7 @@ export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerC
         wikiContents += ` since ${installDate.toUTCString()}`;
     }
 
-    wikiContents += ". This page is updated once a day.";
+    wikiContents += ".";
 
     let wikiPage: WikiPage | undefined;
     try {
@@ -48,7 +48,9 @@ export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerC
     };
 
     if (wikiPage) {
-        await context.reddit.updateWikiPage(wikiPageOptions);
+        if (wikiPage.content !== wikiContents) {
+            await context.reddit.updateWikiPage(wikiPageOptions);
+        }
     } else {
         wikiPage = await context.reddit.createWikiPage(wikiPageOptions);
     }

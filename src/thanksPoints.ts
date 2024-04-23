@@ -188,6 +188,12 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     // Queue user for cleanup checks in 24 hours, overwriting existing value.
     await context.redis.zAdd(CLEANUP_LOG_KEY, {member: parentComment.authorName, score: addDays(new Date(), 1).getTime()});
 
+    // Queue a leaderboard update.
+    await context.scheduler.runJob({
+        name: "updateLeaderboard",
+        runAt: new Date(),
+    });
+
     // Check to see if user has reached the superuser threshold.
     const autoSuperuserThreshold = settings[SettingName.AutoSuperuserThreshold] as number ?? 0;
     const notifyOnAutoSuperuser = (settings[SettingName.NotifyOnAutoSuperuser] as string[] ?? [ReplyOptions.NoReply])[0];
