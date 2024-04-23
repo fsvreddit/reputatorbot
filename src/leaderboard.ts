@@ -50,9 +50,11 @@ export async function updateLeaderboard (_: ScheduledJobEvent, context: TriggerC
     if (wikiPage) {
         if (wikiPage.content !== wikiContents) {
             await context.reddit.updateWikiPage(wikiPageOptions);
+            console.log("Leaderboard: Leaderboard updated.");
         }
     } else {
         wikiPage = await context.reddit.createWikiPage(wikiPageOptions);
+        console.log("Leaderboard: Leaderboard created.");
     }
 
     const correctPermissionLevel = leaderboardMode[0] === LeaderboardMode.Public ? WikiPagePermissionLevel.SUBREDDIT_PERMISSIONS : WikiPagePermissionLevel.MODS_ONLY;
