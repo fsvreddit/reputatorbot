@@ -97,5 +97,10 @@ export async function populateCleanupLog (context: TriggerContext) {
     if (cleanupLogUsersWithoutScores.length > 0) {
         await context.redis.zRem(CLEANUP_LOG_KEY, cleanupLogUsersWithoutScores);
         console.log(`OnUpgradeCleanupTasks: Removed records of ${existingScoreUsers.length} from cleanup log who don't have scores.`);
+        await context.scheduler.runJob({
+            name: "updateLeaderboard",
+            runAt: new Date(),
+            data: {reason: "Removed records of deleted users"},
+        });
     }
 }
