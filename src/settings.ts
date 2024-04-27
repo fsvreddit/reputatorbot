@@ -140,6 +140,11 @@ export const appSettings: SettingsFormField[] = [
                 label: "Users who are not permitted to award points",
                 helpText: "Optional. Enter a comma-separated list of users who are not able to award points",
             },
+            {
+                name: SettingName.PostFlairTextToIgnore,
+                type: "string",
+                label: "Optional. A list of post flairs (comma separated) for posts where points cannot be awarded",
+            },
         ],
     },
     {
@@ -210,11 +215,6 @@ export const appSettings: SettingsFormField[] = [
         type: "group",
         label: "Post Flair Setting Options",
         fields: [
-            {
-                name: SettingName.PostFlairTextToIgnore,
-                type: "string",
-                label: "Posts with flair text to ignore points command (comma seperated)",
-            },
             {
                 name: SettingName.SetPostFlairOnThanks,
                 type: "boolean",

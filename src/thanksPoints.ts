@@ -118,9 +118,9 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     console.log(`${event.comment.id}: Comment contains a reputation points command.`);
 
     const postFlairTextToIgnoreSetting = settings[SettingName.PostFlairTextToIgnore] as string ?? "";
-    if (postFlairTextToIgnoreSetting) {
+    if (postFlairTextToIgnoreSetting && event.post.linkFlair) {
         const postFlairTextToIgnore = postFlairTextToIgnoreSetting.split(",").map(flair => flair.trim().toLowerCase());
-        const postFlair = event.post.linkFlair?.text.toLowerCase().toString() as string;
+        const postFlair = event.post.linkFlair.text.toLowerCase();
         if (postFlairTextToIgnore.includes(postFlair)) {
             console.log(`${event.comment.id}: Cannot award points to post with: '${postFlair}' flair`);
             return;
