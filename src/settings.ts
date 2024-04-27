@@ -24,7 +24,7 @@ export enum SettingName {
     SetPostFlairTemplate = "setPostFlairOnThanksTemplate",
     LeaderboardMode = "leaderboardMode",
     LeaderboardWikiPage = "leaderboardWikiPage",
-    PostFlairTextToIgnore = 'postFlairTextToIgnore'
+    PostFlairTextToIgnore = "postFlairTextToIgnore"
 }
 
 export enum ExistingFlairOverwriteHandling {
@@ -214,7 +214,7 @@ export const appSettings: SettingsFormField[] = [
                 name: SettingName.PostFlairTextToIgnore,
                 type: "string",
                 label: "Posts with flair text to ignore points command (comma seperated)",
-            },            
+            },
             {
                 name: SettingName.SetPostFlairOnThanks,
                 type: "boolean",

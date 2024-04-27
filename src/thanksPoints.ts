@@ -88,7 +88,6 @@ async function getUserIsSuperuser (username: string, context: TriggerContext): P
 }
 
 export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, context: TriggerContext) {
-
     if (!event.comment || !event.post || !event.author || !event.subreddit) {
         console.log("Event is not in the required state");
         return;
@@ -120,9 +119,9 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const postFlairTextToIgnoreSetting = settings[SettingName.PostFlairTextToIgnore] as string ?? "";
     if (postFlairTextToIgnoreSetting) {
         const postFlairTextToIgnore = postFlairTextToIgnoreSetting.split(",").map(flair => flair.trim().toLowerCase());
-        const postFlair = event.post.flair.text.toLowerCase()
+        const postFlair = event.post.linkFlair?.text.toLowerCase().toString() as string;
         if (postFlairTextToIgnore.includes(postFlair)) {
-            console.log(`${event.comment.id}: Cannot award points to ` + postFlair + ' post');
+            console.log(`${event.comment.id}: Cannot award points to post with: '${postFlair}' flair`);
             return;
         }
     }
