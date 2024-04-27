@@ -27,7 +27,14 @@ This application stores the reputation score awarded by the app for each user in
 
 If the application is removed from a subreddit, all data is deleted although the flairs will remain. If the application is subsequently re-installed, the existing flairs will be used as a basis for new point awarding.
 
+Data for users is removed from the app within 24 hours from v1.3 onwards.
+
 ## Change History
+
+### Version 1.3:
+
+* You can now exclude posts with certain flairs from allowing points to be awarded.
+* If a user deletes their account, their data will be removed from the app within 24 hours.
 
 ### Version 1.2:
 
