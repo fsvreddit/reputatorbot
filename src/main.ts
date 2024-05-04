@@ -4,6 +4,7 @@ import {appSettings} from "./settings.js";
 import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
 import {updateLeaderboard} from "./leaderboard.js";
 import {cleanupDeletedAccounts} from "./cleanupTasks.js";
+import {backupAllScores, restoreForm, restoreFormHandler, showRestoreForm} from "./backupAndRestore.js";
 
 Devvit.addSettings(appSettings);
 
@@ -31,6 +32,22 @@ Devvit.addSchedulerJob({
     name: "cleanupDeletedAccounts",
     onRun: cleanupDeletedAccounts,
 });
+
+Devvit.addMenuItem({
+    label: "Backup ReputatorBot Scores",
+    forUserType: "moderator",
+    location: "subreddit",
+    onPress: backupAllScores,
+});
+
+Devvit.addMenuItem({
+    label: "Restore ReputatorBot Scores",
+    forUserType: "moderator",
+    location: "subreddit",
+    onPress: showRestoreForm,
+});
+
+export const restoreFormKey = Devvit.createForm(restoreForm, restoreFormHandler);
 
 Devvit.configure({
     redditAPI: true,

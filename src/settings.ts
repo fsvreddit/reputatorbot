@@ -25,7 +25,9 @@ export enum AppSetting {
     LeaderboardMode = "leaderboardMode",
     LeaderboardWikiPage = "leaderboardWikiPage",
     LeaderboardSize = "leaderboardSize",
-    PostFlairTextToIgnore = "postFlairTextToIgnore"
+    PostFlairTextToIgnore = "postFlairTextToIgnore",
+    EnableBackup = "enableBackup",
+    EnableRestore = "enableRestore",
 }
 
 export enum ExistingFlairOverwriteHandling {
@@ -275,13 +277,32 @@ export const appSettings: SettingsFormField[] = [
             {
                 name: AppSetting.LeaderboardSize,
                 type: "number",
-                label: "Leaderboard Sizz",
+                label: "Leaderboard Size",
                 defaultValue: 20,
                 onValidate: ({value}) => {
                     if (value && (value < 10 || value > 100)) {
                         return "Value should be between 10 and 100";
                     }
                 },
+            },
+        ],
+    },
+    {
+        type: "group",
+        label: "Backup and Restore",
+        fields: [
+            {
+                name: AppSetting.EnableBackup,
+                type: "boolean",
+                label: "Enable Backup",
+                defaultValue: true,
+            },
+            {
+                name: AppSetting.EnableRestore,
+                type: "boolean",
+                label: "Enable Restore",
+                helpText: "This should be left disabled to prevent inadvertent score overwriting. Only enable during restore operations.",
+                defaultValue: false,
             },
         ],
     },
