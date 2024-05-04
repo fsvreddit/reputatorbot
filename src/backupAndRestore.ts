@@ -137,10 +137,8 @@ export async function restoreFormHandler (event: FormOnSubmitEvent, context: Con
 
     // Grab scores that do not yet exist in Redis.
     const scoresToAdd = scores.filter(score => score.u && score.s > 0 && !existingScores.some(existingItem => existingItem.member === score.u));
-    console.log(scoresToAdd.length);
     if (chosenAction === "overwrite") {
         scoresToAdd.push(...scores.filter(score => score.u && score.s > 0 && backupScoreIsHigher(score, existingScores)));
-        console.log(scoresToAdd.length);
     }
 
     if (!scoresToAdd.length) {
