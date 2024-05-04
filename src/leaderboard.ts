@@ -17,7 +17,9 @@ export async function updateLeaderboard (event: ScheduledJobEvent, context: Trig
         return;
     }
 
-    const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, 19, {by: "rank", reverse: true});
+    const leaderboardSize = settings[AppSetting.LeaderboardSize] as number ?? 20;
+
+    const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, leaderboardSize - 1, {by: "rank", reverse: true});
 
     const subredditName = await getSubredditName(context);
 

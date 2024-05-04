@@ -24,6 +24,7 @@ export enum AppSetting {
     SetPostFlairTemplate = "setPostFlairOnThanksTemplate",
     LeaderboardMode = "leaderboardMode",
     LeaderboardWikiPage = "leaderboardWikiPage",
+    LeaderboardSize = "leaderboardSize",
     PostFlairTextToIgnore = "postFlairTextToIgnore"
 }
 
@@ -268,6 +269,17 @@ export const appSettings: SettingsFormField[] = [
                     const wikiPageNameRegex = /^[\w/]+$/i;
                     if (value && !wikiPageNameRegex.test(value)) {
                         return "Invalid wiki page name. Wiki page name must consist of alphanumeric characters and / characters only.";
+                    }
+                },
+            },
+            {
+                name: AppSetting.LeaderboardSize,
+                type: "number",
+                label: "Leaderboard Sizz",
+                defaultValue: 20,
+                onValidate: ({value}) => {
+                    if (value && (value < 10 || value > 100)) {
+                        return "Value should be between 10 and 100";
                     }
                 },
             },
