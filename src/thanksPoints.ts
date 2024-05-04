@@ -196,7 +196,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     // Store the user's new score
     await context.redis.zAdd(POINTS_STORE_KEY, {member: parentComment.authorName, score: newScore});
     // Queue user for cleanup checks in 24 hours, overwriting existing value.
-    await context.redis.zAdd(CLEANUP_LOG_KEY, {member: parentComment.authorName, score: addDays(new Date(), 1).getTime()});
+    await context.redis.zAdd(CLEANUP_LOG_KEY, {member: parentComment.authorName, score: addDays(new Date(), 2).getTime()});
 
     // Queue a leaderboard update.
     await context.scheduler.runJob({
