@@ -1,6 +1,6 @@
 import {SettingsFormField, SettingsFormFieldValidatorEvent} from "@devvit/public-api";
 
-export enum SettingName {
+export enum AppSetting {
     ThanksCommand = "thanksCommand",
     ModThanksCommand = "modThanksCommand",
     AnyoneCanAwardPoints = "anyoneCanAwardPoints",
@@ -76,7 +76,7 @@ export const appSettings: SettingsFormField[] = [
         label: "Reputation Points Settings",
         fields: [
             {
-                name: SettingName.ThanksCommand,
+                name: AppSetting.ThanksCommand,
                 type: "string",
                 label: "Command for users to award reputation points",
                 defaultValue: "!thanks",
@@ -87,33 +87,33 @@ export const appSettings: SettingsFormField[] = [
                 },
             },
             {
-                name: SettingName.ModThanksCommand,
+                name: AppSetting.ModThanksCommand,
                 type: "string",
                 label: "Alternate command for mods and trusted users to award reputation points",
                 helpText: "Optional.",
                 defaultValue: "!modthanks",
             },
             {
-                name: SettingName.AnyoneCanAwardPoints,
+                name: AppSetting.AnyoneCanAwardPoints,
                 type: "boolean",
                 label: "Allow any user to award points",
                 helpText: "If turned off, only the OP, mods and named trusted users may award points",
                 defaultValue: false,
             },
             {
-                name: SettingName.SuperUsers,
+                name: AppSetting.SuperUsers,
                 type: "string",
                 label: "A list of trusted users other than mods who can award points",
                 helpText: "Optional. Enter a comma-separated list of users who can award points in addition to mods using the mod command",
             },
             {
-                name: SettingName.AutoSuperuserThreshold,
+                name: AppSetting.AutoSuperuserThreshold,
                 type: "number",
                 label: "Treat users with this many points as automatically a trusted user",
                 helpText: "If zero, only explicitly named users above will be treated as trusted users",
             },
             {
-                name: SettingName.NotifyOnAutoSuperuser,
+                name: AppSetting.NotifyOnAutoSuperuser,
                 type: "select",
                 label: "Notify users who reach the auto trusted user threshold",
                 options: replyOptionChoices,
@@ -122,26 +122,26 @@ export const appSettings: SettingsFormField[] = [
                 onValidate: selectFieldHasOptionChosen,
             },
             {
-                name: SettingName.NotifyOnAutoSuperuserTemplate,
+                name: AppSetting.NotifyOnAutoSuperuserTemplate,
                 type: "paragraph",
                 label: "Template of message sent when a user reaches the trusted user threshold",
                 helpText: "Placeholder supported: {{authorname}}, {{permalink}}, {{threshold}}, {{pointscommand}}",
                 defaultValue: TemplateDefaults.NotifyOnSuperuserTemplate,
             },
             {
-                name: SettingName.UsersWhoCannotBeAwardedPoints,
+                name: AppSetting.UsersWhoCannotBeAwardedPoints,
                 type: "string",
                 label: "Users who shouldn't have points awarded to them",
                 helpText: "Optional. Enter a comma-separated list of users who shouldn't have points awarded to them.",
             },
             {
-                name: SettingName.UsersWhoCannotAwardPoints,
+                name: AppSetting.UsersWhoCannotAwardPoints,
                 type: "string",
                 label: "Users who are not permitted to award points",
                 helpText: "Optional. Enter a comma-separated list of users who are not able to award points",
             },
             {
-                name: SettingName.PostFlairTextToIgnore,
+                name: AppSetting.PostFlairTextToIgnore,
                 type: "string",
                 label: "Optional. A list of post flairs (comma separated) for posts where points cannot be awarded",
             },
@@ -152,7 +152,7 @@ export const appSettings: SettingsFormField[] = [
         label: "Points Setting Options",
         fields: [
             {
-                name: SettingName.ExistingFlairHandling,
+                name: AppSetting.ExistingFlairHandling,
                 type: "select",
                 label: "Flair setting option",
                 options: [
@@ -165,20 +165,20 @@ export const appSettings: SettingsFormField[] = [
                 onValidate: selectFieldHasOptionChosen,
             },
             {
-                name: SettingName.CSSClass,
+                name: AppSetting.CSSClass,
                 type: "string",
                 label: "CSS class to use for points flairs",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
             },
             {
-                name: SettingName.FlairTemplate,
+                name: AppSetting.FlairTemplate,
                 type: "string",
                 label: "Flair template ID to use for points flairs",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
                 onValidate: isFlairTemplateValid,
             },
             {
-                name: SettingName.NotifyOnError,
+                name: AppSetting.NotifyOnError,
                 type: "select",
                 label: "Notify users by replying to their command if they try to award a point to themselves accidentally",
                 options: replyOptionChoices,
@@ -187,14 +187,14 @@ export const appSettings: SettingsFormField[] = [
                 onValidate: selectFieldHasOptionChosen,
             },
             {
-                name: SettingName.NotifyOnErrorTemplate,
+                name: AppSetting.NotifyOnErrorTemplate,
                 type: "paragraph",
                 label: "Template of message sent when a user tries to award themselves a point",
                 helpText: "Placeholder supported: {{authorname}}, {{permalink}}",
                 defaultValue: TemplateDefaults.NotifyOnErrorTemplate,
             },
             {
-                name: SettingName.NotifyOnSuccess,
+                name: AppSetting.NotifyOnSuccess,
                 type: "select",
                 label: "Notify users by replying to their command if their points command works",
                 options: replyOptionChoices,
@@ -203,7 +203,7 @@ export const appSettings: SettingsFormField[] = [
                 onValidate: selectFieldHasOptionChosen,
             },
             {
-                name: SettingName.NotifyOnSuccessTemplate,
+                name: AppSetting.NotifyOnSuccessTemplate,
                 type: "paragraph",
                 label: "Template of message sent when a user successfully awards a point",
                 helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
@@ -216,25 +216,25 @@ export const appSettings: SettingsFormField[] = [
         label: "Post Flair Setting Options",
         fields: [
             {
-                name: SettingName.SetPostFlairOnThanks,
+                name: AppSetting.SetPostFlairOnThanks,
                 type: "boolean",
                 label: "Set post flair when a reputation point is awarded",
                 helpText: "This can be used to mark a question as resolved, or answered",
                 defaultValue: false,
             },
             {
-                name: SettingName.SetPostFlairText,
+                name: AppSetting.SetPostFlairText,
                 type: "string",
                 label: "Post Flair Text",
             },
             {
-                name: SettingName.SetPostFlairCSSClass,
+                name: AppSetting.SetPostFlairCSSClass,
                 type: "string",
                 label: "Post Flair CSS Class",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
             },
             {
-                name: SettingName.SetPostFlairTemplate,
+                name: AppSetting.SetPostFlairTemplate,
                 type: "string",
                 label: "Post Flair Template ID",
                 helpText: "Optional. Please choose either a CSS class or flair template, not both.",
@@ -247,7 +247,7 @@ export const appSettings: SettingsFormField[] = [
         label: "Leaderboard Settings",
         fields: [
             {
-                name: SettingName.LeaderboardMode,
+                name: AppSetting.LeaderboardMode,
                 type: "select",
                 options: [
                     {label: "Off", value: LeaderboardMode.Off},
@@ -260,7 +260,7 @@ export const appSettings: SettingsFormField[] = [
                 onValidate: selectFieldHasOptionChosen,
             },
             {
-                name: SettingName.LeaderboardWikiPage,
+                name: AppSetting.LeaderboardWikiPage,
                 type: "string",
                 label: "Leaderboard Wiki Page",
                 defaultValue: "reputatorbotleaderboard",
