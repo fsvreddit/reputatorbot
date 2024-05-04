@@ -153,10 +153,13 @@ export async function restoreFormHandler (event: FormOnSubmitEvent, context: Con
     await context.scheduler.runJob({
         name: "updateLeaderboard",
         runAt: new Date(),
-        data: {reason: "ReputatorBot has been installed or upgraded."},
+        data: {reason: "Imported data from backup"},
     });
 
     context.ui.showToast(`Successfully imported ${scoresToAdd.length} ${pluralize("score", scoresToAdd.length)}.`);
+
+    // Remove "Install Date" redis key, because we can now assume that historical data is populated.
+    await context.redis.del("InstallDate");
 }
 
 function backupScoreIsHigher (backupScore: CompactScore, existingScores: ZMember[]): boolean {
