@@ -31,6 +31,10 @@ If the application is removed from a subreddit, all data is deleted although the
 
 Data for users is removed from the app within 48 hours from v1.3 onwards.
 
+## Acknowledgements
+
+[Podium icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/podium)
+
 ## Change History
 
 ### Version 1.4:

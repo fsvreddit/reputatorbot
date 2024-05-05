@@ -36,6 +36,11 @@ export async function updateLeaderboard (event: ScheduledJobEvent, context: Trig
 
     wikiContents += ".";
 
+    const helpPage = settings[AppSetting.LeaderboardHelpPage] as string | undefined;
+    if (helpPage) {
+        wikiContents += `\n\n[How to award points on /r/${subredditName}](${helpPage})`;
+    }
+
     let wikiPage: WikiPage | undefined;
     try {
         wikiPage = await context.reddit.getWikiPage(subredditName, wikiPageName);

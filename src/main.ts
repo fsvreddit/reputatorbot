@@ -5,7 +5,7 @@ import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
 import {updateLeaderboard} from "./leaderboard.js";
 import {cleanupDeletedAccounts} from "./cleanupTasks.js";
 import {backupAllScores, restoreForm, restoreFormHandler, showRestoreForm} from "./backupAndRestore.js";
-import {leaderboardCustomPost, createCustomPost} from "./leaderboardCustomPost.js";
+import {leaderboardCustomPost, createCustomPost} from "./customPost/index.js";
 
 Devvit.addSettings(appSettings);
 
@@ -34,15 +34,6 @@ Devvit.addSchedulerJob({
     onRun: cleanupDeletedAccounts,
 });
 
-Devvit.addCustomPostType(leaderboardCustomPost);
-
-Devvit.addMenuItem({
-    label: "Submit Custom Post",
-    forUserType: "moderator",
-    location: "subreddit",
-    onPress: createCustomPost,
-});
-
 Devvit.addMenuItem({
     label: "Backup ReputatorBot Scores",
     forUserType: "moderator",
@@ -58,6 +49,15 @@ Devvit.addMenuItem({
 });
 
 export const restoreFormKey = Devvit.createForm(restoreForm, restoreFormHandler);
+
+Devvit.addCustomPostType(leaderboardCustomPost);
+
+Devvit.addMenuItem({
+    label: "Submit Custom Post",
+    forUserType: "moderator",
+    location: "subreddit",
+    onPress: createCustomPost,
+});
 
 Devvit.configure({
     redditAPI: true,
