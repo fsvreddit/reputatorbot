@@ -83,7 +83,7 @@ export async function backupAllScores (_: MenuItemOnPressEvent, context: Context
 export async function showRestoreForm (_: MenuItemOnPressEvent, context: Context) {
     const restoreEnabled = await context.settings.get<boolean>(AppSetting.EnableRestore);
     if (!restoreEnabled) {
-        context.ui.showToast("Restore function is disabled.");
+        context.ui.showToast("Restore function is disabled in Settings.");
         return;
     }
 
