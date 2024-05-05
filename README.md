@@ -6,9 +6,11 @@ The app gets triggered when a comment is posted or edited, but only never award 
 
 You can also set an optional post flair if a point is awarded, such as to mark the question as "Resolved".
 
+The app has backup and restore functionality from 1.4 onwards, which enables points to be preserved if you uninstall the app or if you want to import data from a previous reputation points app. For technical details of this function, please [see here](https://www.reddit.com/r/fsvapps/wiki/reputatorbotbackup).
+
 ## Limitations:
 
-* The optional leaderboard will not pull in points for users until this app awards one. If you have previously used /u/Clippy_Office_Asst or a similar bot to award reputation points in the past, this will make the leaderboard misleading.
+* The optional leaderboard will not pull in points for users until this app awards one. If you have previously used /u/Clippy_Office_Asst or a similar bot to award reputation points in the past, this will make the leaderboard misleading unless you restore from a backup.
 * For flair setting options, if you specify both a CSS class and a flair template, the flair template will be used.
 
 ## Suggestions
