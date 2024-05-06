@@ -41,7 +41,7 @@
         "prefer-numeric-literals": "error",
         "prefer-rest-params": "error",
         "prefer-template": "error",
-        "require-await": "error",
+        "require-await": "off",
         "@typescript-eslint/require-await": "error",
         "space-infix-ops": "error",
         "array-bracket-newline": [

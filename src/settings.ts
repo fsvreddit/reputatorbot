@@ -25,6 +25,7 @@ export enum AppSetting {
     LeaderboardMode = "leaderboardMode",
     LeaderboardWikiPage = "leaderboardWikiPage",
     LeaderboardSize = "leaderboardSize",
+    LeaderboardHelpPage = "leaderboardHelpPage",
     PostFlairTextToIgnore = "postFlairTextToIgnore",
     EnableBackup = "enableBackup",
     EnableRestore = "enableRestore",
@@ -257,7 +258,7 @@ export const appSettings: SettingsFormField[] = [
                     {label: "Mod Only", value: LeaderboardMode.ModOnly},
                     {label: "Default settings for wiki", value: LeaderboardMode.Public},
                 ],
-                label: "Leaderboard Mode",
+                label: "Wiki Leaderboard Mode",
                 multiSelect: false,
                 defaultValue: [LeaderboardMode.Off],
                 onValidate: selectFieldHasOptionChosen,
@@ -284,6 +285,12 @@ export const appSettings: SettingsFormField[] = [
                         return "Value should be between 10 and 100";
                     }
                 },
+            },
+            {
+                name: AppSetting.LeaderboardHelpPage,
+                type: "string",
+                label: "Leaderboard Help Page",
+                helpText: "Optional. A web page (e.g. on your wiki, or an announcement post) telling users how to use reputation points on your subreddit",
             },
         ],
     },
