@@ -1,4 +1,4 @@
-import {TriggerContext, User} from "@devvit/public-api";
+import {SettingsValues, TriggerContext, User} from "@devvit/public-api";
 import {CommentSubmit, CommentUpdate} from "@devvit/protos";
 import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
 import {addDays, addWeeks} from "date-fns";
@@ -41,7 +41,7 @@ interface ScoreResult {
     flairScoreIsNaN: boolean,
 }
 
-async function getCurrentScore (user: User, context: TriggerContext): Promise<ScoreResult> {
+async function getCurrentScore (user: User, context: TriggerContext, settings: SettingsValues): Promise<ScoreResult> {
     const subredditName = await getSubredditName(context);
     const userFlair = await user.getUserFlairBySubreddit(subredditName);
 
@@ -60,6 +60,13 @@ async function getCurrentScore (user: User, context: TriggerContext): Promise<Sc
     }
 
     const flairScoreIsNaN = isNaN(scoreFromFlair);
+
+    if (settings[AppSetting.PrioritiseScoreFromFlair] && !flairScoreIsNaN) {
+        return {
+            currentScore: scoreFromFlair,
+            flairScoreIsNaN,
+        };
+    }
 
     return {
         currentScore: !flairScoreIsNaN && scoreFromFlair > scoreFromRedis ? scoreFromFlair : scoreFromRedis,
@@ -81,7 +88,7 @@ async function getUserIsSuperuser (username: string, context: TriggerContext): P
 
     if (autoSuperuserThreshold) {
         const user = await context.reddit.getUserByUsername(username);
-        const {currentScore} = await getCurrentScore(user, context);
+        const {currentScore} = await getCurrentScore(user, context, settings);
         return currentScore >= autoSuperuserThreshold;
     } else {
         return false;
@@ -189,7 +196,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     }
 
     const parentCommentUser = await parentComment.getAuthor();
-    const {currentScore, flairScoreIsNaN} = await getCurrentScore(parentCommentUser, context);
+    const {currentScore, flairScoreIsNaN} = await getCurrentScore(parentCommentUser, context, settings);
     const newScore = currentScore + 1;
 
     console.log(`${event.comment.id}: New score for ${parentComment.authorName} is ${newScore}`);

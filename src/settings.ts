@@ -29,6 +29,7 @@ export enum AppSetting {
     PostFlairTextToIgnore = "postFlairTextToIgnore",
     EnableBackup = "enableBackup",
     EnableRestore = "enableRestore",
+    PrioritiseScoreFromFlair = "prioritiseScoreFromFlair",
 }
 
 export enum ExistingFlairOverwriteHandling {
@@ -148,6 +149,13 @@ export const appSettings: SettingsFormField[] = [
                 name: AppSetting.PostFlairTextToIgnore,
                 type: "string",
                 label: "Optional. A list of post flairs (comma separated) for posts where points cannot be awarded",
+            },
+            {
+                name: AppSetting.PrioritiseScoreFromFlair,
+                type: "boolean",
+                label: "Use score from flair in precedence over score from database",
+                helpText: "This may be useful if you want to be able to manually set a score via a flair.",
+                defaultValue: false,
             },
         ],
     },
