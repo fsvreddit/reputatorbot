@@ -5,7 +5,7 @@ import {onAppFirstInstall, onAppInstallOrUpgrade} from "./installEvents.js";
 import {updateLeaderboard} from "./leaderboard.js";
 import {cleanupDeletedAccounts} from "./cleanupTasks.js";
 import {backupAllScores, restoreForm, restoreFormHandler, showRestoreForm} from "./backupAndRestore.js";
-import {leaderboardCustomPost, createCustomPost} from "./customPost/index.js";
+import {leaderboardCustomPost, createCustomPostMenuHandler, customPostForm, createCustomPostFormHandler} from "./customPost/index.js";
 
 Devvit.addSettings(appSettings);
 
@@ -53,11 +53,13 @@ export const restoreFormKey = Devvit.createForm(restoreForm, restoreFormHandler)
 Devvit.addCustomPostType(leaderboardCustomPost);
 
 Devvit.addMenuItem({
-    label: "Submit Custom Post",
+    label: "Submit Leaderboard Post",
     forUserType: "moderator",
     location: "subreddit",
-    onPress: createCustomPost,
+    onPress: createCustomPostMenuHandler,
 });
+
+export const customPostFormKey = Devvit.createForm(customPostForm, createCustomPostFormHandler);
 
 Devvit.configure({
     redditAPI: true,

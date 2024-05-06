@@ -1,10 +1,10 @@
 import {Context, UseIntervalResult, UseStateResult} from "@devvit/public-api";
 import {AppSetting} from "../settings.js";
 import {POINTS_STORE_KEY} from "../thanksPoints.js";
+import {CustomPostData} from "./index.js";
 
 export type LeaderboardEntry = {
     username: string;
-    userId: string;
     score: number;
     rank: number;
 }
@@ -20,7 +20,7 @@ export class LeaderboardState {
     readonly refresher: UseIntervalResult;
 
     constructor (public context: Context) {
-        this.leaderboardSize = context.useState<number>(async () => await context.settings.get<number>(AppSetting.LeaderboardSize) ?? 20);
+        this.leaderboardSize = context.useState<number>(async () => this.getLeaderboardSize());
         this.leaderboardHelpUrl = context.useState<string>(async () => await context.settings.get<string>(AppSetting.LeaderboardHelpPage) ?? "");
         this.leaderboardEntries = context.useState<LeaderboardEntry[]>(async () => this.fetchLeaderboard());
         this.leaderboardPage = context.useState(1);
@@ -53,24 +53,27 @@ export class LeaderboardState {
         return Math.ceil(this.leaderboard.length / this.leaderboardPageSize);
     }
 
+    async getLeaderboardSize () {
+        const redisKey = "customPostData";
+        const data = await this.context.redis.get(redisKey);
+        if (!data) {
+            return 20;
+        }
+
+        const customPostData = JSON.parse(data) as CustomPostData;
+        return customPostData.numberOfUsers;
+    }
+
     async fetchLeaderboard () {
         const leaderboard: LeaderboardEntry[] = [];
         const items = await this.context.redis.zRange(POINTS_STORE_KEY, 0, this.leaderboardSize[0] - 1, {by: "rank", reverse: true});
         let rank = 1;
         for (const item of items) {
-            console.log(`Getting user ${item.member}`);
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                const user = await this.context.reddit.getUserByUsername(item.member);
-                leaderboard.push({
-                    username: item.member,
-                    score: item.score,
-                    userId: user.id,
-                    rank: rank++,
-                });
-            } catch {
-                // User suspended, deleted, etc., cannot show them in leaderboard.
-            }
+            leaderboard.push({
+                username: item.member,
+                score: item.score,
+                rank: rank++,
+            });
         }
 
         console.log("Fetched leaderboard");

@@ -1,19 +1,83 @@
-import {Context, CustomPostType, Devvit, MenuItemOnPressEvent} from "@devvit/public-api";
+import {Context, CustomPostType, Devvit, Form, FormOnSubmitEvent, MenuItemOnPressEvent} from "@devvit/public-api";
 import {LeaderboardRow} from "./leaderboardRow.js";
 import {LeaderboardState} from "./state.js";
+import {customPostFormKey} from "../main.js";
+import {previewPost} from "./preview.js";
 
-export async function createCustomPost (event: MenuItemOnPressEvent, context: Context) {
-    await context.reddit.submitPost({
+export const customPostForm: Form = {
+    title: "Create Leaderboard Post",
+    fields: [
+        {
+            label: "Post title",
+            name: "postTitle",
+            type: "string",
+            defaultValue: "ReputatorBot High Scores",
+        },
+        {
+            label: "Number of users to include",
+            name: "numberOfUsers",
+            type: "number",
+            defaultValue: 20,
+        },
+        {
+            label: "Sticky post",
+            name: "stickyPost",
+            type: "boolean",
+            defaultValue: true,
+        },
+        {
+            label: "Remove previous leaderboard post",
+            name: "removeExisting",
+            type: "boolean",
+            defaultValue: true,
+        },
+    ],
+};
+
+export interface CustomPostData {
+    postId: string,
+    numberOfUsers: number,
+}
+
+export async function createCustomPostFormHandler (event: FormOnSubmitEvent, context: Context) {
+    const redisKey = "customPostData";
+
+    if (event.values.removeExisting) {
+        const customPostData = await context.redis.get(redisKey);
+        if (customPostData) {
+            const data = JSON.parse(customPostData) as CustomPostData;
+            const post = await context.reddit.getPostById(data.postId);
+            await post.remove();
+        }
+    }
+
+    let postTitle = event.values.postTitle as string | undefined;
+    if (!postTitle) {
+        postTitle = "ReputatorBot High Scores";
+    }
+
+    const post = await context.reddit.submitPost({
         subredditName: "fsvsandbox",
-        title: "ReputatorBot High Scores",
-        preview: (
-            <vstack padding="medium" cornerRadius="medium">
-                <text style="heading" size="medium">
-                    Loading ReputatorBot Leaderboard...
-                </text>
-            </vstack>
-        ),
+        title: postTitle,
+        preview: previewPost,
     });
+
+    if (event.values.stickyPost) {
+        await post.sticky();
+    }
+
+    context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
+
+    const newData: CustomPostData = {
+        postId: post.id,
+        numberOfUsers: event.values.numberOfUsers as number ?? 20,
+    };
+
+    await context.redis.set(redisKey, JSON.stringify(newData));
+}
+
+export function createCustomPostMenuHandler (_: MenuItemOnPressEvent, context: Context) {
+    context.ui.showForm(customPostFormKey);
 }
 
 export const leaderboardCustomPost: CustomPostType = {
@@ -21,11 +85,7 @@ export const leaderboardCustomPost: CustomPostType = {
     description: "Post that displays ReputatorBot high scorers",
     height: "tall",
     render: context => {
-        console.log("Leaderboard State");
         const state = new LeaderboardState(context);
-        const subredditName = state.subredditName[0];
-
-        console.log("Rendering custom post");
 
         return (
             <blocks height="tall">
@@ -41,7 +101,7 @@ export const leaderboardCustomPost: CustomPostType = {
                     </hstack>
                     <vstack alignment="middle center" padding="medium" gap="medium" grow>
                         <vstack alignment="top start" gap="small" grow>
-                            {state.leaderboard.slice((state.page - 1) * state.leaderboardPageSize, state.page * state.leaderboardPageSize).map(entry => <LeaderboardRow username={entry.username} userId={entry.userId} score={entry.score} navigateToProfile={() => {
+                            {state.leaderboard.slice((state.page - 1) * state.leaderboardPageSize, state.page * state.leaderboardPageSize).map(entry => <LeaderboardRow username={entry.username} score={entry.score} rank={entry.rank} navigateToProfile={() => {
                                 context.ui.navigateTo(`https://reddit.com/u/${entry.username}`);
                             }} />)}
                         </vstack>
