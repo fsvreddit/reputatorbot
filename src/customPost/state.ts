@@ -76,7 +76,6 @@ export class LeaderboardState {
             });
         }
 
-        console.log("Fetched leaderboard");
         return leaderboard;
     }
 
