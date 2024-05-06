@@ -8,6 +8,10 @@ You can also set an optional post flair if a point is awarded, such as to mark t
 
 The app has backup and restore functionality from 1.4 onwards, which enables points to be preserved if you uninstall the app or if you want to import data from a previous reputation points app. For technical details of this function, please [see here](https://www.reddit.com/r/fsvapps/wiki/reputatorbotbackup).
 
+## Custom post
+
+By using the subreddit ... menu, you can create a custom post that shows the current leaderboard. You can choose the post title and the number of users to show on the leaderboard.
+
 ## Limitations:
 
 * The optional leaderboard will not pull in points for users until this app awards one. If you have previously used /u/Clippy_Office_Asst or a similar bot to award reputation points in the past, this will make the leaderboard misleading unless you restore from a backup.
@@ -39,6 +43,7 @@ Data for users is removed from the app within 48 hours from v1.3 onwards.
 
 ### Version 1.4:
 
+* Add custom post type to allow a leaderboard to be pinned to the top of your subreddit
 * Allow a configurable number of scores on the leaderboard
 * Backup and Restore functionality
 * Reduce data cleanup interval to 48 hours
