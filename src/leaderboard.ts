@@ -3,6 +3,7 @@ import {getSubredditName} from "./utility.js";
 import {LeaderboardMode, AppSetting} from "./settings.js";
 import {POINTS_STORE_KEY} from "./thanksPoints.js";
 import markdownEscape from "markdown-escape";
+import pluralize from "pluralize";
 
 export async function updateLeaderboard (event: ScheduledJobEvent, context: TriggerContext) {
     const settings = await context.settings.getAll();
@@ -26,7 +27,7 @@ export async function updateLeaderboard (event: ScheduledJobEvent, context: Trig
     let wikiContents = `# ReputatorBot High Scores for ${subredditName}\n\nUser | Points Total\n-|-\n`;
     wikiContents += highScores.map(score => `${markdownEscape(score.member)}|${score.score}`).join("\n");
 
-    wikiContents += "\n\nThe leaderboard shows the top 20 users who have been awarded at least one point";
+    wikiContents += `\n\nThe leaderboard shows the top ${leaderboardSize} ${pluralize("user", leaderboardSize)} who ${pluralize("has", leaderboardSize)} been awarded at least one point`;
 
     const installDateTimestamp = await context.redis.get("InstallDate");
     if (installDateTimestamp) {
