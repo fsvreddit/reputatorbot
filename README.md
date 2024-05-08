@@ -6,9 +6,15 @@ The app gets triggered when a comment is posted or edited, but only never award 
 
 You can also set an optional post flair if a point is awarded, such as to mark the question as "Resolved".
 
+The app has backup and restore functionality from 1.4 onwards, which enables points to be preserved if you uninstall the app or if you want to import data from a previous reputation points app. For technical details of this function, please [see here](https://www.reddit.com/r/fsvapps/wiki/reputatorbotbackup).
+
+## Custom post
+
+By using the subreddit ... menu, you can create a custom post that shows the current leaderboard. You can choose the post title and the number of users to show on the leaderboard.
+
 ## Limitations:
 
-* The optional leaderboard will not pull in points for users until this app awards one. If you have previously used /u/Clippy_Office_Asst or a similar bot to award reputation points in the past, this will make the leaderboard misleading.
+* The optional leaderboard will not pull in points for users until this app awards one. If you have previously used /u/Clippy_Office_Asst or a similar bot to award reputation points in the past, this will make the leaderboard misleading unless you restore from a backup.
 * For flair setting options, if you specify both a CSS class and a flair template, the flair template will be used.
 
 ## Suggestions
@@ -27,9 +33,20 @@ This application stores the reputation score awarded by the app for each user in
 
 If the application is removed from a subreddit, all data is deleted although the flairs will remain. If the application is subsequently re-installed, the existing flairs will be used as a basis for new point awarding.
 
-Data for users is removed from the app within 24 hours from v1.3 onwards.
+Data for users is removed from the app within 48 hours from v1.3 onwards.
+
+## Acknowledgements
+
+[Podium icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/podium)
 
 ## Change History
+
+### Version 1.4:
+
+* Add custom post type to allow a leaderboard to be pinned to the top of your subreddit
+* Allow a configurable number of scores on the leaderboard
+* Backup and Restore functionality
+* Reduce data cleanup interval to 48 hours
 
 ### Version 1.3:
 

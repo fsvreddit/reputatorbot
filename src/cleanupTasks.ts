@@ -60,7 +60,7 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
     // For active users, set their next check date to be one day from now.
     if (activeUsers.length > 0) {
         console.log(`Cleanup: ${activeUsers.length} users still active out of ${userStatuses.length}. Resetting next check time.`);
-        await context.redis.zAdd(CLEANUP_LOG_KEY, ...activeUsers.map(user => <ZMember>{member: user, score: addDays(new Date(), 1).getTime()}));
+        await context.redis.zAdd(CLEANUP_LOG_KEY, ...activeUsers.map(user => <ZMember>{member: user, score: addDays(new Date(), 2).getTime()}));
     }
 
     // For deleted users, remove them from both the cleanup log and the points score.
@@ -73,7 +73,15 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
         await context.scheduler.runJob({
             name: "updateLeaderboard",
             runAt: new Date(),
-            data: {reason: "One or more deleted accounts purged"},
+            data: {reason: "One or more deleted accounts removed from database"},
+        });
+    }
+
+    if (items.length > itemsToCheck) {
+        // In a backlog, so force another run.
+        await context.scheduler.runJob({
+            name: "cleanupDeletedAccounts",
+            runAt: new Date(),
         });
     }
 }
@@ -89,7 +97,7 @@ export async function populateCleanupLog (context: TriggerContext) {
     const existingScoreUsersWithoutCleanup = existingScoreUsers.filter(username => !cleanupLogUsers.includes(username));
 
     if (existingScoreUsersWithoutCleanup.length > 0) {
-        await context.redis.zAdd(CLEANUP_LOG_KEY, ...existingScoreUsersWithoutCleanup.map(username => <ZMember>{member: username, score: addMinutes(new Date(), Math.random() * 60 * 24).getTime()}));
+        await context.redis.zAdd(CLEANUP_LOG_KEY, ...existingScoreUsersWithoutCleanup.map(username => <ZMember>{member: username, score: addMinutes(new Date(), Math.random() * 60 * 48).getTime()}));
         console.log(`OnUpgradeCleanupTasks: Stored records of ${existingScoreUsers.length} users for future cleanup.`);
     }
 
