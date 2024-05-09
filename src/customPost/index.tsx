@@ -3,6 +3,7 @@ import {LeaderboardRow} from "./leaderboardRow.js";
 import {LeaderboardState} from "./state.js";
 import {customPostFormKey} from "../main.js";
 import {previewPost} from "./preview.js";
+import {getSubredditName} from "../utility.js";
 
 export const customPostForm: Form = {
     title: "Create Leaderboard Post",
@@ -56,8 +57,10 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
         postTitle = "ReputatorBot High Scores";
     }
 
+    const subredditName = await getSubredditName(context);
+
     const post = await context.reddit.submitPost({
-        subredditName: "fsvsandbox",
+        subredditName,
         title: postTitle,
         preview: previewPost,
     });
