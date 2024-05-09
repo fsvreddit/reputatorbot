@@ -65,19 +65,19 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
         preview: previewPost,
     });
 
-    if (event.values.stickyPost) {
-        await post.sticky();
-    }
-
-    context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
-    context.ui.navigateTo(post);
-
     const newData: CustomPostData = {
         postId: post.id,
         numberOfUsers: event.values.numberOfUsers as number ?? 20,
     };
 
     await context.redis.set(redisKey, JSON.stringify(newData));
+
+    if (event.values.stickyPost) {
+        await post.sticky();
+    }
+
+    context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
+    context.ui.navigateTo(post);
 }
 
 export function createCustomPostMenuHandler (_: MenuItemOnPressEvent, context: Context) {
