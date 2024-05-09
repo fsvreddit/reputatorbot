@@ -70,6 +70,7 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
     }
 
     context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
+    context.ui.navigateTo(post);
 
     const newData: CustomPostData = {
         postId: post.id,
