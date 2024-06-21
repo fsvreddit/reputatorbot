@@ -65,18 +65,19 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
         preview: previewPost,
     });
 
-    if (event.values.stickyPost) {
-        await post.sticky();
-    }
-
-    context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
-
     const newData: CustomPostData = {
         postId: post.id,
         numberOfUsers: event.values.numberOfUsers as number ?? 20,
     };
 
     await context.redis.set(redisKey, JSON.stringify(newData));
+
+    if (event.values.stickyPost) {
+        await post.sticky();
+    }
+
+    context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
+    context.ui.navigateTo(post);
 }
 
 export function createCustomPostMenuHandler (_: MenuItemOnPressEvent, context: Context) {
@@ -102,8 +103,8 @@ export const leaderboardCustomPost: CustomPostType = {
                             state.context.ui.navigateTo(state.leaderboardHelpUrl[0]);
                         }}></button> : <image imageHeight={48} imageWidth={48} url="podium.png" />}
                     </hstack>
-                    <vstack alignment="middle center" padding="medium" gap="medium" grow>
-                        <vstack alignment="top start" gap="small" grow>
+                    <vstack alignment="middle center" padding="medium" gap="medium" width="100%" grow>
+                        <vstack alignment="top start" gap="small" width="100%" grow>
                             {state.leaderboard.slice((state.page - 1) * state.leaderboardPageSize, state.page * state.leaderboardPageSize).map(entry => <LeaderboardRow username={entry.username} score={entry.score} rank={entry.rank} navigateToProfile={() => {
                                 context.ui.navigateTo(`https://reddit.com/u/${entry.username}`);
                             }} />)}
