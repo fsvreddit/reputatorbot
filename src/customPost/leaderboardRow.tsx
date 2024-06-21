@@ -8,7 +8,7 @@ interface LeaderboardItem {
 }
 
 export const LeaderboardRow = (props: LeaderboardItem) => (
-    <hstack cornerRadius="small" gap="small" width="100%" minWidth="100%" grow>
+    <hstack cornerRadius="small" gap="small" width="100%" grow>
         <spacer size="small"/>
         <button onPress={props.navigateToProfile}>{props.username}</button>
         <spacer grow/>

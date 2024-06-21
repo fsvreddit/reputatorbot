@@ -103,8 +103,8 @@ export const leaderboardCustomPost: CustomPostType = {
                             state.context.ui.navigateTo(state.leaderboardHelpUrl[0]);
                         }}></button> : <image imageHeight={48} imageWidth={48} url="podium.png" />}
                     </hstack>
-                    <vstack alignment="middle center" padding="medium" gap="medium" grow>
-                        <vstack alignment="top start" gap="small" grow>
+                    <vstack alignment="middle center" padding="medium" gap="medium" width="100%" grow>
+                        <vstack alignment="top start" gap="small" width="100%" grow>
                             {state.leaderboard.slice((state.page - 1) * state.leaderboardPageSize, state.page * state.leaderboardPageSize).map(entry => <LeaderboardRow username={entry.username} score={entry.score} rank={entry.rank} navigateToProfile={() => {
                                 context.ui.navigateTo(`https://reddit.com/u/${entry.username}`);
                             }} />)}
