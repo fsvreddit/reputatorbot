@@ -67,7 +67,7 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
 
     const newData: CustomPostData = {
         postId: post.id,
-        numberOfUsers: event.values.numberOfUsers as number ?? 20,
+        numberOfUsers: event.values.numberOfUsers as number | undefined ?? 20,
     };
 
     await context.redis.set(redisKey, JSON.stringify(newData));

@@ -3,6 +3,7 @@ import {AppSetting} from "../settings.js";
 import {POINTS_STORE_KEY} from "../thanksPoints.js";
 import {CustomPostData} from "./index.js";
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type LeaderboardEntry = {
     username: string;
     score: number;

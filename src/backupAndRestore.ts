@@ -45,7 +45,7 @@ export async function backupAllScores (_: MenuItemOnPressEvent, context: Context
     }
 
     const currentScores = await context.redis.zRange(POINTS_STORE_KEY, 0, -1);
-    const compactScores = currentScores.map(score => <CompactScore>{u: score.member, s: score.score});
+    const compactScores = currentScores.map(score => ({u: score.member, s: score.score} as CompactScore));
     const compressed = compressScores(compactScores);
 
     const subredditName = await getSubredditName(context);
@@ -146,7 +146,7 @@ export async function restoreFormHandler (event: FormOnSubmitEvent, context: Con
         return;
     }
 
-    await context.redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => <ZMember>{member: score.u, score: score.s}));
+    await context.redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => ({member: score.u, score: score.s} as ZMember)));
 
     await populateCleanupLog(context);
 

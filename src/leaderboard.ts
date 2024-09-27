@@ -18,7 +18,7 @@ export async function updateLeaderboard (event: ScheduledJobEvent, context: Trig
         return;
     }
 
-    const leaderboardSize = settings[AppSetting.LeaderboardSize] as number ?? 20;
+    const leaderboardSize = settings[AppSetting.LeaderboardSize] as number | undefined ?? 20;
 
     const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, leaderboardSize - 1, {by: "rank", reverse: true});
 

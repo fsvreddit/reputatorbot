@@ -56,7 +56,7 @@ async function getCurrentScore (user: User, context: TriggerContext, settings: S
     }
 
     let scoreFromFlair: number;
-    if (!userFlair || !userFlair.flairText || userFlair.flairText === "-") {
+    if (!userFlair?.flairText || userFlair.flairText === "-") {
         scoreFromFlair = 0;
     } else {
         scoreFromFlair = parseInt(userFlair.flairText);
@@ -80,14 +80,14 @@ async function getCurrentScore (user: User, context: TriggerContext, settings: S
 async function getUserIsSuperuser (username: string, context: TriggerContext): Promise<boolean> {
     const settings = await context.settings.getAll();
 
-    const superUserSetting = settings[AppSetting.SuperUsers] as string ?? "";
+    const superUserSetting = settings[AppSetting.SuperUsers] as string | undefined ?? "";
     const superUsers = superUserSetting.split(",").map(user => user.trim().toLowerCase());
 
     if (superUsers.includes(username.toLowerCase())) {
         return true;
     }
 
-    const autoSuperuserThreshold = settings[AppSetting.AutoSuperuserThreshold] as number ?? 0;
+    const autoSuperuserThreshold = settings[AppSetting.AutoSuperuserThreshold] as number | undefined ?? 0;
 
     if (autoSuperuserThreshold) {
         let user: User | undefined;
@@ -127,15 +127,14 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const userCommand = settings[AppSetting.ThanksCommand] as string | undefined;
     const modCommand = settings[AppSetting.ModThanksCommand] as string | undefined;
 
-    // eslint-disable-next-line no-extra-parens
-    const commentContainsCommand = (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase())) || (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase()));
+    const commentContainsCommand = (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase())) ?? (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase()));
     if (!commentContainsCommand) {
         return;
     }
 
     console.log(`${event.comment.id}: Comment contains a reputation points command.`);
 
-    const postFlairTextToIgnoreSetting = settings[AppSetting.PostFlairTextToIgnore] as string ?? "";
+    const postFlairTextToIgnoreSetting = settings[AppSetting.PostFlairTextToIgnore] as string | undefined ?? "";
     if (postFlairTextToIgnoreSetting && event.post.linkFlair) {
         const postFlairTextToIgnore = postFlairTextToIgnoreSetting.split(",").map(flair => flair.trim().toLowerCase());
         const postFlair = event.post.linkFlair.text.toLowerCase();
@@ -148,7 +147,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const isMod = await isModerator(context, event.subreddit.name, event.author.name);
 
     if (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase()) && event.author.id !== event.post.authorId) {
-        const anyoneCanAwardPoints = settings[AppSetting.AnyoneCanAwardPoints] as boolean ?? false;
+        const anyoneCanAwardPoints = settings[AppSetting.AnyoneCanAwardPoints] as boolean | undefined ?? false;
         if (!anyoneCanAwardPoints) {
             console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
             return;
@@ -162,7 +161,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         }
     }
 
-    const usersWhoCantAwardPointsSetting = settings[AppSetting.UsersWhoCannotAwardPoints] as string ?? "";
+    const usersWhoCantAwardPointsSetting = settings[AppSetting.UsersWhoCannotAwardPoints] as string | undefined ?? "";
     if (usersWhoCantAwardPointsSetting) {
         const usersWhoCantAwardPoints = usersWhoCantAwardPointsSetting.split(",").map(user => user.trim().toLowerCase());
         if (usersWhoCantAwardPoints.includes(event.author.name.toLowerCase())) {
@@ -178,16 +177,16 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     } else if (parentComment.authorName === event.author.name) {
         console.log(`${event.comment.id}: points attempt by ${event.author.name} on their own comment`);
-        const notifyOnError = (settings[AppSetting.NotifyOnError] as string[] ?? [ReplyOptions.NoReply])[0] as ReplyOptions;
-        if (notifyOnError) {
-            let message = settings[AppSetting.NotifyOnErrorTemplate] as string ?? TemplateDefaults.NotifyOnErrorTemplate;
+        const notifyOnError = (settings[AppSetting.NotifyOnError] as string[] | undefined ?? [ReplyOptions.NoReply])[0] as ReplyOptions;
+        if (notifyOnError !== ReplyOptions.NoReply) {
+            let message = settings[AppSetting.NotifyOnErrorTemplate] as string | undefined ?? TemplateDefaults.NotifyOnErrorTemplate;
             message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
             message = replaceAll(message, "{{permalink}}", parentComment.permalink);
             await replyToUser(context, notifyOnError, event.author.name, message, event.comment.id);
         }
         return;
     } else {
-        const excludedUsersSetting = settings[AppSetting.UsersWhoCannotBeAwardedPoints] as string ?? "";
+        const excludedUsersSetting = settings[AppSetting.UsersWhoCannotBeAwardedPoints] as string | undefined ?? "";
         if (excludedUsersSetting) {
             const excludedUsers = excludedUsersSetting.split(",").map(userName => userName.trim().toLowerCase());
             if (excludedUsers.includes(parentComment.authorName.toLowerCase())) {
@@ -228,11 +227,11 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     });
 
     // Check to see if user has reached the superuser threshold.
-    const autoSuperuserThreshold = settings[AppSetting.AutoSuperuserThreshold] as number ?? 0;
-    const notifyOnAutoSuperuser = (settings[AppSetting.NotifyOnAutoSuperuser] as string[] ?? [ReplyOptions.NoReply])[0] as ReplyOptions;
-    if (autoSuperuserThreshold && modCommand && newScore === autoSuperuserThreshold && notifyOnAutoSuperuser) {
+    const autoSuperuserThreshold = settings[AppSetting.AutoSuperuserThreshold] as number | undefined ?? 0;
+    const notifyOnAutoSuperuser = (settings[AppSetting.NotifyOnAutoSuperuser] as string[] | undefined ?? [ReplyOptions.NoReply])[0] as ReplyOptions;
+    if (autoSuperuserThreshold && modCommand && newScore === autoSuperuserThreshold && notifyOnAutoSuperuser !== ReplyOptions.NoReply) {
         console.log(`${event.comment.id}: ${parentCommentUser.username} has reached the auto superuser threshold. Notifying.`);
-        let message = settings[AppSetting.NotifyOnAutoSuperuserTemplate] as string ?? TemplateDefaults.NotifyOnSuperuserTemplate;
+        let message = settings[AppSetting.NotifyOnAutoSuperuserTemplate] as string | undefined ?? TemplateDefaults.NotifyOnSuperuserTemplate;
         message = replaceAll(message, "{{authorname}}", parentCommentUser.username);
         message = replaceAll(message, "{{permalink}}", parentComment.permalink);
         message = replaceAll(message, "{{threshold}}", autoSuperuserThreshold.toString());
@@ -241,7 +240,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         await replyToUser(context, notifyOnAutoSuperuser, parentCommentUser.username, message, parentComment.id);
     }
 
-    const existingFlairOverwriteHandling = (settings[AppSetting.ExistingFlairHandling] as string[] ?? [ExistingFlairOverwriteHandling.OverwriteNumeric])[0] as ExistingFlairOverwriteHandling;
+    const existingFlairOverwriteHandling = (settings[AppSetting.ExistingFlairHandling] as string[] | undefined ?? [ExistingFlairOverwriteHandling.OverwriteNumeric])[0] as ExistingFlairOverwriteHandling;
 
     const shouldSetUserFlair = existingFlairOverwriteHandling !== ExistingFlairOverwriteHandling.NeverSet && (!flairScoreIsNaN || existingFlairOverwriteHandling === ExistingFlairOverwriteHandling.OverwriteAll);
 
@@ -274,7 +273,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         console.log(`${event.comment.id}: Flair not set (option disabled or flair in wrong state)`);
     }
 
-    const shouldSetPostFlair = settings[AppSetting.SetPostFlairOnThanks] as boolean ?? false;
+    const shouldSetPostFlair = settings[AppSetting.SetPostFlairOnThanks] as boolean | undefined ?? false;
     if (shouldSetPostFlair) {
         let postFlairText = settings[AppSetting.SetPostFlairText] as string | undefined;
         let postFlairCSSClass = settings[AppSetting.SetPostFlairCSSClass] as string | undefined;
@@ -308,8 +307,8 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     await context.redis.set(redisKey, now.getTime().toString(), {expiration: addWeeks(now, 1)});
 
     const notifyOnSuccess = (settings[AppSetting.NotifyOnSuccess] as string[] | [ReplyOptions.NoReply])[0] as ReplyOptions;
-    if (notifyOnSuccess) {
-        let message = settings[AppSetting.NotifyOnSuccessTemplate] as string ?? TemplateDefaults.NotifyOnSuccessTemplate;
+    if (notifyOnSuccess !== ReplyOptions.NoReply) {
+        let message = settings[AppSetting.NotifyOnSuccessTemplate] as string | undefined ?? TemplateDefaults.NotifyOnSuccessTemplate;
         message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         message = replaceAll(message, "{{permalink}}", parentComment.permalink);
