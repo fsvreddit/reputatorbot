@@ -1,4 +1,4 @@
-import {SettingsFormField, SettingsFormFieldValidatorEvent} from "@devvit/public-api";
+import { SettingsFormField, SettingsFormFieldValidatorEvent } from "@devvit/public-api";
 
 export enum AppSetting {
     ThanksCommand = "thanksCommand",
@@ -45,9 +45,9 @@ export enum ReplyOptions {
 }
 
 const replyOptionChoices = [
-    {label: "No Notification", value: ReplyOptions.NoReply},
-    {label: "Send user a private message", value: ReplyOptions.ReplyByPM},
-    {label: "Reply as comment", value: ReplyOptions.ReplyAsComment},
+    { label: "No Notification", value: ReplyOptions.NoReply },
+    { label: "Send user a private message", value: ReplyOptions.ReplyByPM },
+    { label: "Reply as comment", value: ReplyOptions.ReplyAsComment },
 ];
 
 export enum LeaderboardMode {
@@ -87,7 +87,7 @@ export const appSettings: SettingsFormField[] = [
                 type: "string",
                 label: "Command for users to award reputation points",
                 defaultValue: "!thanks",
-                onValidate: ({value}) => {
+                onValidate: ({ value }) => {
                     if (!value) {
                         return "You must specify a command";
                     }
@@ -170,9 +170,9 @@ export const appSettings: SettingsFormField[] = [
                 type: "select",
                 label: "Flair setting option",
                 options: [
-                    {label: "Set flair to new score, if flair unset or flair is numeric", value: ExistingFlairOverwriteHandling.OverwriteNumeric},
-                    {label: "Set flair to new score, if user has no flair", value: ExistingFlairOverwriteHandling.OverwriteAll},
-                    {label: "Never set flair", value: ExistingFlairOverwriteHandling.NeverSet},
+                    { label: "Set flair to new score, if flair unset or flair is numeric", value: ExistingFlairOverwriteHandling.OverwriteNumeric },
+                    { label: "Set flair to new score, if user has no flair", value: ExistingFlairOverwriteHandling.OverwriteAll },
+                    { label: "Never set flair", value: ExistingFlairOverwriteHandling.NeverSet },
                 ],
                 multiSelect: false,
                 defaultValue: [ExistingFlairOverwriteHandling.OverwriteNumeric],
@@ -264,9 +264,9 @@ export const appSettings: SettingsFormField[] = [
                 name: AppSetting.LeaderboardMode,
                 type: "select",
                 options: [
-                    {label: "Off", value: LeaderboardMode.Off},
-                    {label: "Mod Only", value: LeaderboardMode.ModOnly},
-                    {label: "Default settings for wiki", value: LeaderboardMode.Public},
+                    { label: "Off", value: LeaderboardMode.Off },
+                    { label: "Mod Only", value: LeaderboardMode.ModOnly },
+                    { label: "Default settings for wiki", value: LeaderboardMode.Public },
                 ],
                 label: "Wiki Leaderboard Mode",
                 multiSelect: false,
@@ -278,7 +278,7 @@ export const appSettings: SettingsFormField[] = [
                 type: "string",
                 label: "Leaderboard Wiki Page",
                 defaultValue: "reputatorbotleaderboard",
-                onValidate: ({value}) => {
+                onValidate: ({ value }) => {
                     const wikiPageNameRegex = /^[\w/]+$/i;
                     if (value && !wikiPageNameRegex.test(value)) {
                         return "Invalid wiki page name. Wiki page name must consist of alphanumeric characters and / characters only.";
@@ -290,7 +290,7 @@ export const appSettings: SettingsFormField[] = [
                 type: "number",
                 label: "Leaderboard Size",
                 defaultValue: 20,
-                onValidate: ({value}) => {
+                onValidate: ({ value }) => {
                     if (value && (value < 10 || value > 100)) {
                         return "Value should be between 10 and 100";
                     }

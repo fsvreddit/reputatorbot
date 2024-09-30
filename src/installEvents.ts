@@ -1,6 +1,6 @@
-import {TriggerContext} from "@devvit/public-api";
-import {AppInstall, AppUpgrade} from "@devvit/protos";
-import {populateCleanupLog} from "./cleanupTasks.js";
+import { TriggerContext } from "@devvit/public-api";
+import { AppInstall, AppUpgrade } from "@devvit/protos";
+import { populateCleanupLog } from "./cleanupTasks.js";
 
 export async function onAppFirstInstall (_: AppInstall, context: TriggerContext) {
     await context.redis.set("InstallDate", new Date().getTime().toString());
@@ -24,6 +24,6 @@ export async function onAppInstallOrUpgrade (_: AppInstall | AppUpgrade, context
     await context.scheduler.runJob({
         name: "updateLeaderboard",
         runAt: new Date(),
-        data: {reason: "ReputatorBot has been installed or upgraded."},
+        data: { reason: "ReputatorBot has been installed or upgraded." },
     });
 }

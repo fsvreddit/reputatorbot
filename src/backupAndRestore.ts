@@ -1,16 +1,16 @@
-import {Context, Form, FormOnSubmitEvent, MenuItemOnPressEvent, WikiPage, WikiPagePermissionLevel, ZMember} from "@devvit/public-api";
+import { Context, Form, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, WikiPage, WikiPagePermissionLevel, ZMember } from "@devvit/public-api";
 import pako from "pako";
-import {POINTS_STORE_KEY} from "./thanksPoints.js";
-import {getSubredditName} from "./utility.js";
-import Ajv, {JSONSchemaType} from "ajv";
-import {restoreFormKey} from "./main.js";
-import {populateCleanupLog} from "./cleanupTasks.js";
+import { POINTS_STORE_KEY } from "./thanksPoints.js";
+import { getSubredditName } from "./utility.js";
+import Ajv, { JSONSchemaType } from "ajv";
+import { restoreFormKey } from "./main.js";
+import { populateCleanupLog } from "./cleanupTasks.js";
 import pluralize from "pluralize";
-import {AppSetting} from "./settings.js";
+import { AppSetting } from "./settings.js";
 
 export interface CompactScore {
-    u: string,
-    s: number
+    u: string;
+    s: number;
 }
 
 const schema: JSONSchemaType<CompactScore[]> = {
@@ -18,8 +18,8 @@ const schema: JSONSchemaType<CompactScore[]> = {
     items: {
         type: "object",
         properties: {
-            u: {type: "string", nullable: false},
-            s: {type: "integer", nullable: false},
+            u: { type: "string", nullable: false },
+            s: { type: "integer", nullable: false },
         },
         required: ["u", "s"],
         additionalProperties: false,
@@ -45,7 +45,7 @@ export async function backupAllScores (_: MenuItemOnPressEvent, context: Context
     }
 
     const currentScores = await context.redis.zRange(POINTS_STORE_KEY, 0, -1);
-    const compactScores = currentScores.map(score => ({u: score.member, s: score.score} as CompactScore));
+    const compactScores = currentScores.map(score => ({ u: score.member, s: score.score } as CompactScore));
     const compressed = compressScores(compactScores);
 
     const subredditName = await getSubredditName(context);
@@ -103,7 +103,7 @@ export async function showRestoreForm (_: MenuItemOnPressEvent, context: Context
     context.ui.showForm(restoreFormKey);
 }
 
-export async function restoreFormHandler (event: FormOnSubmitEvent, context: Context) {
+export async function restoreFormHandler (event: FormOnSubmitEvent<JSONObject>, context: Context) {
     const chosenAction = (event.values.action as string[])[0];
 
     const subredditName = await getSubredditName(context);
@@ -146,14 +146,14 @@ export async function restoreFormHandler (event: FormOnSubmitEvent, context: Con
         return;
     }
 
-    await context.redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => ({member: score.u, score: score.s} as ZMember)));
+    await context.redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => ({ member: score.u, score: score.s } as ZMember)));
 
     await populateCleanupLog(context);
 
     await context.scheduler.runJob({
         name: "updateLeaderboard",
         runAt: new Date(),
-        data: {reason: "Imported data from backup"},
+        data: { reason: "Imported data from backup" },
     });
 
     context.ui.showToast(`Successfully imported ${scoresToAdd.length} ${pluralize("score", scoresToAdd.length)}.`);
@@ -178,8 +178,8 @@ export const restoreForm: Form = {
             label: "Existing Score Handling",
             type: "select",
             options: [
-                {label: "Overwrite a user's score if backup has a higher value than the database", value: "overwrite"},
-                {label: "Skip restore if user already has a score", value: "skip"},
+                { label: "Overwrite a user's score if backup has a higher value than the database", value: "overwrite" },
+                { label: "Skip restore if user already has a score", value: "skip" },
             ],
             multiSelect: false,
             required: true,

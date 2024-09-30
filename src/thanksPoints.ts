@@ -1,10 +1,10 @@
-import {SettingsValues, TriggerContext, User} from "@devvit/public-api";
-import {CommentSubmit, CommentUpdate} from "@devvit/protos";
-import {ThingPrefix, getSubredditName, isModerator, replaceAll} from "./utility.js";
-import {addDays, addWeeks} from "date-fns";
-import {ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting} from "./settings.js";
+import { SettingsValues, TriggerContext, User } from "@devvit/public-api";
+import { CommentSubmit, CommentUpdate } from "@devvit/protos";
+import { ThingPrefix, getSubredditName, isModerator, replaceAll } from "./utility.js";
+import { addDays, addWeeks } from "date-fns";
+import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
 import markdownEscape from "markdown-escape";
-import {CLEANUP_LOG_KEY, DAYS_BETWEEN_CHECKS} from "./cleanupTasks.js";
+import { CLEANUP_LOG_KEY, DAYS_BETWEEN_CHECKS } from "./cleanupTasks.js";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
 
@@ -37,8 +37,8 @@ async function replyToUser (context: TriggerContext, replyMode: ReplyOptions, to
 }
 
 interface ScoreResult {
-    currentScore: number,
-    flairScoreIsNaN: boolean,
+    currentScore: number;
+    flairScoreIsNaN: boolean;
 }
 
 async function getCurrentScore (user: User, context: TriggerContext, settings: SettingsValues): Promise<ScoreResult> {
@@ -99,7 +99,7 @@ async function getUserIsSuperuser (username: string, context: TriggerContext): P
         if (!user) {
             return false;
         }
-        const {currentScore} = await getCurrentScore(user, context, settings);
+        const { currentScore } = await getCurrentScore(user, context, settings);
         return currentScore >= autoSuperuserThreshold;
     } else {
         return false;
@@ -117,7 +117,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     }
 
-    if (event.author.id === context.appAccountId || event.author.name === "AutoModerator") {
+    if (event.author.name === context.appName || event.author.name === "AutoModerator") {
         // Prevent bot account or Automod granting points
         return;
     }
@@ -172,7 +172,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     const parentComment = await context.reddit.getCommentById(event.comment.parentId);
 
-    if (parentComment.authorId === context.appAccountId || parentComment.authorName === "AutoModerator") {
+    if (parentComment.authorName === context.appName || parentComment.authorName === "AutoModerator") {
         // Cannot award points to Automod or the app account
         return;
     } else if (parentComment.authorName === event.author.name) {
@@ -210,20 +210,20 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         console.log("Parent comment user is shadowbanned or suspended. Cannot proceed.");
         return;
     }
-    const {currentScore, flairScoreIsNaN} = await getCurrentScore(parentCommentUser, context, settings);
+    const { currentScore, flairScoreIsNaN } = await getCurrentScore(parentCommentUser, context, settings);
     const newScore = currentScore + 1;
 
     console.log(`${event.comment.id}: New score for ${parentComment.authorName} is ${newScore}`);
     // Store the user's new score
-    await context.redis.zAdd(POINTS_STORE_KEY, {member: parentComment.authorName, score: newScore});
+    await context.redis.zAdd(POINTS_STORE_KEY, { member: parentComment.authorName, score: newScore });
     // Queue user for cleanup checks in 24 hours, overwriting existing value.
-    await context.redis.zAdd(CLEANUP_LOG_KEY, {member: parentComment.authorName, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime()});
+    await context.redis.zAdd(CLEANUP_LOG_KEY, { member: parentComment.authorName, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime() });
 
     // Queue a leaderboard update.
     await context.scheduler.runJob({
         name: "updateLeaderboard",
         runAt: new Date(),
-        data: {reason: `Awarded a point to ${parentComment.authorName}. New score: ${newScore}`},
+        data: { reason: `Awarded a point to ${parentComment.authorName}. New score: ${newScore}` },
     });
 
     // Check to see if user has reached the superuser threshold.
@@ -304,7 +304,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     }
 
     const now = new Date();
-    await context.redis.set(redisKey, now.getTime().toString(), {expiration: addWeeks(now, 1)});
+    await context.redis.set(redisKey, now.getTime().toString(), { expiration: addWeeks(now, 1) });
 
     const notifyOnSuccess = (settings[AppSetting.NotifyOnSuccess] as string[] | [ReplyOptions.NoReply])[0] as ReplyOptions;
     if (notifyOnSuccess !== ReplyOptions.NoReply) {

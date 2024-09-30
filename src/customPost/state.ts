@@ -1,14 +1,14 @@
-import {Context, UseIntervalResult, UseStateResult} from "@devvit/public-api";
-import {AppSetting} from "../settings.js";
-import {POINTS_STORE_KEY} from "../thanksPoints.js";
-import {CustomPostData} from "./index.js";
+import { Context, UseIntervalResult, UseStateResult } from "@devvit/public-api";
+import { AppSetting } from "../settings.js";
+import { POINTS_STORE_KEY } from "../thanksPoints.js";
+import { CustomPostData } from "./index.js";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type LeaderboardEntry = {
     username: string;
     score: number;
     rank: number;
-}
+};
 
 export class LeaderboardState {
     readonly leaderboardSize: UseStateResult<number>;
@@ -67,7 +67,7 @@ export class LeaderboardState {
 
     async fetchLeaderboard () {
         const leaderboard: LeaderboardEntry[] = [];
-        const items = await this.context.redis.zRange(POINTS_STORE_KEY, 0, this.leaderboardSize[0] - 1, {by: "rank", reverse: true});
+        const items = await this.context.redis.zRange(POINTS_STORE_KEY, 0, this.leaderboardSize[0] - 1, { by: "rank", reverse: true });
         let rank = 1;
         for (const item of items) {
             leaderboard.push({

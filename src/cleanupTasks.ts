@@ -1,6 +1,6 @@
-import {ScheduledJobEvent, TriggerContext, User, ZMember} from "@devvit/public-api";
-import {addDays, addMinutes} from "date-fns";
-import {POINTS_STORE_KEY} from "./thanksPoints.js";
+import { TriggerContext, User, ZMember } from "@devvit/public-api";
+import { addDays, addMinutes } from "date-fns";
+import { POINTS_STORE_KEY } from "./thanksPoints.js";
 
 export const CLEANUP_LOG_KEY = "cleanupStore";
 export const DAYS_BETWEEN_CHECKS = 28;
@@ -16,13 +16,13 @@ async function userActive (username: string, context: TriggerContext): Promise<b
 }
 
 interface UserActive {
-    username: string,
-    isActive: boolean,
+    username: string;
+    isActive: boolean;
 }
 
-export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: TriggerContext) {
+export async function cleanupDeletedAccounts (_: unknown, context: TriggerContext) {
     console.log("Cleanup: Starting cleanup job");
-    const items = await context.redis.zRange(CLEANUP_LOG_KEY, 0, new Date().getTime(), {by: "score"});
+    const items = await context.redis.zRange(CLEANUP_LOG_KEY, 0, new Date().getTime(), { by: "score" });
     if (items.length === 0) {
         // No user accounts need to be checked.
         console.log("Cleanup: No users are due a check.");
@@ -46,7 +46,7 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
 
     for (const username of usersToCheck) {
         const isActive = await userActive(username, context);
-        userStatuses.push(({username, isActive} as UserActive));
+        userStatuses.push(({ username, isActive } as UserActive));
     }
 
     const activeUsers = userStatuses.filter(user => user.isActive).map(user => user.username);
@@ -55,7 +55,7 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
     // For active users, set their next check date to be one day from now.
     if (activeUsers.length > 0) {
         console.log(`Cleanup: ${activeUsers.length} users still active out of ${userStatuses.length}. Resetting next check time.`);
-        await context.redis.zAdd(CLEANUP_LOG_KEY, ...activeUsers.map(user => ({member: user, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime()} as ZMember)));
+        await context.redis.zAdd(CLEANUP_LOG_KEY, ...activeUsers.map(user => ({ member: user, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime() } as ZMember)));
     }
 
     // For deleted users, remove them from both the cleanup log and the points score.
@@ -68,7 +68,7 @@ export async function cleanupDeletedAccounts (_: ScheduledJobEvent, context: Tri
         await context.scheduler.runJob({
             name: "updateLeaderboard",
             runAt: new Date(),
-            data: {reason: "One or more deleted accounts removed from database"},
+            data: { reason: "One or more deleted accounts removed from database" },
         });
     }
 
@@ -92,7 +92,7 @@ export async function populateCleanupLog (context: TriggerContext) {
     const existingScoreUsersWithoutCleanup = existingScoreUsers.filter(username => !cleanupLogUsers.includes(username));
 
     if (existingScoreUsersWithoutCleanup.length > 0) {
-        await context.redis.zAdd(CLEANUP_LOG_KEY, ...existingScoreUsersWithoutCleanup.map(username => ({member: username, score: addMinutes(new Date(), Math.random() * 60 * 24 * DAYS_BETWEEN_CHECKS).getTime()} as ZMember)));
+        await context.redis.zAdd(CLEANUP_LOG_KEY, ...existingScoreUsersWithoutCleanup.map(username => ({ member: username, score: addMinutes(new Date(), Math.random() * 60 * 24 * DAYS_BETWEEN_CHECKS).getTime() } as ZMember)));
         console.log(`OnUpgradeCleanupTasks: Stored records of ${existingScoreUsers.length} users for future cleanup.`);
     }
 
@@ -110,7 +110,7 @@ export async function populateCleanupLog (context: TriggerContext) {
     }
 
     if (cleanupLogUsers.length > 0) {
-        await context.redis.zAdd(CLEANUP_LOG_KEY, ...cleanupLogUsers.map(username => ({member: username, score: addMinutes(new Date(), Math.random() * 60 * 24 * DAYS_BETWEEN_CHECKS).getTime()} as ZMember)));
+        await context.redis.zAdd(CLEANUP_LOG_KEY, ...cleanupLogUsers.map(username => ({ member: username, score: addMinutes(new Date(), Math.random() * 60 * 24 * DAYS_BETWEEN_CHECKS).getTime() } as ZMember)));
         console.log(`OnUpgradeCleanupTasks: Rescheduled records of ${cleanupLogUsers.length} users for future cleanup.`);
     }
 }
