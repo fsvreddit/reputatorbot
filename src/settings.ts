@@ -18,6 +18,8 @@ export enum AppSetting {
     NotifyOnErrorTemplate = "notifyOnErrorTemplate",
     NotifyOnSuccess = "notifyOnSuccess",
     NotifyOnSuccessTemplate = "notifyOnSuccessTemplate",
+    NotifyAwardedUser = "notifyAwardedUser",
+    NotifyAwardedUserTemplate = "notifyAwardedUserTemplate",
     SetPostFlairOnThanks = "setPostFlairOnThanks",
     SetPostFlairText = "setPostFlairOnThanksText",
     SetPostFlairCSSClass = "setPostFlairOnThanksCSSClass",
@@ -59,12 +61,13 @@ export enum LeaderboardMode {
 export enum TemplateDefaults {
     NotifyOnErrorTemplate = "Hello {{authorname}},\n\nYou cannot award a point to yourself.\n\nPlease contact the mods if you have any questions.\n\n---\n\n^(I am a bot)",
     NotifyOnSuccessTemplate = "You have awarded 1 point to {{awardeeusername}}.\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
+    NotifyAwardedUserTemplate = "Hello {{awardeeusername}},\n\nYou have been awarded a point for your contribution! New score: {{score}}\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
     NotifyOnSuperuserTemplate = "Hello {{authorname}},\n\nNow that you have reached {{threshold}} points you can now award points yourself, even if you're not the OP. Please use the command \"{{pointscommand}}\" if you'd like to do this.\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
 }
 
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): void | string {
-    const flairTemplateRegex = /^[0-9a-z]{8}(?:-[0-9a-z]{4}){4}[0-9a-z]{8}$/;
+    const flairTemplateRegex = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){4}[0-9a-f]{8}$/;
     if (event.value && !flairTemplateRegex.test(event.value)) {
         return "Invalid flair template ID";
     }
@@ -222,6 +225,22 @@ export const appSettings: SettingsFormField[] = [
                 label: "Template of message sent when a user successfully awards a point",
                 helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
                 defaultValue: TemplateDefaults.NotifyOnSuccessTemplate,
+            },
+            {
+                name: AppSetting.NotifyAwardedUser,
+                type: "select",
+                label: "Notify users who have had a point awarded",
+                options: replyOptionChoices,
+                multiSelect: false,
+                defaultValue: [ReplyOptions.NoReply],
+                onValidate: selectFieldHasOptionChosen,
+            },
+            {
+                name: AppSetting.NotifyAwardedUserTemplate,
+                type: "paragraph",
+                label: "Template of message sent when a user successfully awards a point",
+                helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
+                defaultValue: TemplateDefaults.NotifyAwardedUserTemplate,
             },
         ],
     },

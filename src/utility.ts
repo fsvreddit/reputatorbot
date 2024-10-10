@@ -1,15 +1,6 @@
 import { TriggerContext } from "@devvit/public-api";
 import { addWeeks } from "date-fns";
 
-export enum ThingPrefix {
-    Comment = "t1_",
-    Account = "t2_",
-    Post = "t3_",
-    Message = "t4_",
-    Subreddit = "t5_",
-    Award = "t6_",
-}
-
 export function replaceAll (input: string, pattern: string, replacement: string): string {
     return input.split(pattern).join(replacement);
 }

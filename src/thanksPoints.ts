@@ -1,10 +1,11 @@
 import { SettingsValues, TriggerContext, User } from "@devvit/public-api";
 import { CommentSubmit, CommentUpdate } from "@devvit/protos";
-import { ThingPrefix, getSubredditName, isModerator, replaceAll } from "./utility.js";
+import { getSubredditName, isModerator, replaceAll } from "./utility.js";
 import { addDays, addWeeks } from "date-fns";
 import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
 import markdownEscape from "markdown-escape";
 import { CLEANUP_LOG_KEY, DAYS_BETWEEN_CHECKS } from "./cleanupTasks.js";
+import { isLinkId } from "@devvit/shared-types/tid.js";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
 
@@ -19,6 +20,7 @@ async function replyToUser (context: TriggerContext, replyMode: ReplyOptions, to
                 text: messageBody,
                 to: toUserName,
             });
+            console.log(`${commentId}: PM sent to ${toUserName}.`);
         } catch {
             console.log(`${commentId}: Error sending PM notification to ${toUserName}. User may only allow PMs from whitelisted users.`);
         }
@@ -112,7 +114,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     }
 
-    if (event.comment.parentId.startsWith(ThingPrefix.Post)) {
+    if (isLinkId(event.comment.parentId)) {
         // Points can't be awarded in a top level comment.
         return;
     }
@@ -132,7 +134,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         return;
     }
 
-    console.log(`${event.comment.id}: Comment contains a reputation points command.`);
+    console.log(`${event.comment.id}: Comment from ${event.author.name} contains a reputation points command.`);
 
     const postFlairTextToIgnoreSetting = settings[AppSetting.PostFlairTextToIgnore] as string | undefined ?? "";
     if (postFlairTextToIgnoreSetting && event.post.linkFlair) {
@@ -314,5 +316,15 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{permalink}}", parentComment.permalink);
         message = replaceAll(message, "{{score}}", newScore.toString());
         await replyToUser(context, notifyOnSuccess, event.author.name, message, event.comment.id);
+    }
+
+    const notifyAwardedUser = (settings[AppSetting.NotifyAwardedUser] as string[] | [ReplyOptions.NoReply])[0] as ReplyOptions;
+    if (notifyAwardedUser !== ReplyOptions.NoReply) {
+        let message = settings[AppSetting.NotifyAwardedUserTemplate] as string | undefined ?? TemplateDefaults.NotifyAwardedUserTemplate;
+        message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
+        message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
+        message = replaceAll(message, "{{permalink}}", parentComment.permalink);
+        message = replaceAll(message, "{{score}}", newScore.toString());
+        await replyToUser(context, notifyAwardedUser, event.author.name, message, event.comment.id);
     }
 }
