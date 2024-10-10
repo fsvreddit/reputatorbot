@@ -43,12 +43,6 @@ export async function cleanupDeletedAccounts (_: unknown, context: TriggerContex
 
     const itemsToCheck = 50;
 
-    if (items.length > itemsToCheck) {
-        console.log(`Cleanup: ${items.length} accounts are due a check. Checking first ${itemsToCheck} in this run.`);
-    } else {
-        console.log(`Cleanup: ${items.length} accounts are due a check.`);
-    }
-
     // Get the first N accounts that are due a check.
     const usersToCheck = items.slice(0, itemsToCheck).map(item => item.member);
     const userStatuses: UserActive[] = [];
@@ -63,14 +57,12 @@ export async function cleanupDeletedAccounts (_: unknown, context: TriggerContex
 
     // For active users, set their next check date to be one day from now.
     if (activeUsers.length > 0) {
-        console.log(`Cleanup: ${activeUsers.length} users still active out of ${userStatuses.length}. Resetting next check time.`);
         await setCleanupForUsers(activeUsers, context);
         await context.redis.zAdd(CLEANUP_LOG_KEY, ...activeUsers.map(user => ({ member: user, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime() } as ZMember)));
     }
 
     // For deleted users, remove them from both the cleanup log and the points score.
     if (deletedUsers.length > 0) {
-        console.log(`Cleanup: ${deletedUsers.length} users out of ${userStatuses.length} are deleted or suspended. Removing from data store.`);
         await context.redis.zRem(POINTS_STORE_KEY, deletedUsers);
         await context.redis.zRem(CLEANUP_LOG_KEY, deletedUsers);
 
@@ -81,6 +73,8 @@ export async function cleanupDeletedAccounts (_: unknown, context: TriggerContex
             data: { reason: "One or more deleted accounts removed from database" },
         });
     }
+
+    console.log(`Cleanup: ${deletedUsers.length}/${userStatuses.length} deleted or suspended.`);
 
     if (items.length > itemsToCheck) {
         // In a backlog, so force another run.
