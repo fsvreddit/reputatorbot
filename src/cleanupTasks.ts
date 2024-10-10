@@ -110,15 +110,11 @@ export async function populateCleanupLogAndScheduleCleanup (context: TriggerCont
     const redisKey = "prevTimeBetweenChecks";
     const prevTimeBetweenChecks = await context.redis.get(redisKey);
 
-    if (JSON.stringify(DAYS_BETWEEN_CHECKS) === prevTimeBetweenChecks) {
-        return;
-    }
-
-    await context.redis.set(redisKey, JSON.stringify(DAYS_BETWEEN_CHECKS));
-
-    if (cleanupLogUsers.length > 0) {
+    if (JSON.stringify(DAYS_BETWEEN_CHECKS) !== prevTimeBetweenChecks && cleanupLogUsers.length > 0) {
         await context.redis.zAdd(CLEANUP_LOG_KEY, ...cleanupLogUsers.map(username => ({ member: username, score: addMinutes(new Date(), Math.random() * 60 * 24 * DAYS_BETWEEN_CHECKS).getTime() } as ZMember)));
         console.log(`OnUpgradeCleanupTasks: Rescheduled records of ${cleanupLogUsers.length} users for future cleanup.`);
+
+        await context.redis.set(redisKey, JSON.stringify(DAYS_BETWEEN_CHECKS));
     }
 
     // Cancel any ad-hoc jobs and reschedule.
