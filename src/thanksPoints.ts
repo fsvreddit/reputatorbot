@@ -110,7 +110,6 @@ async function getUserIsSuperuser (username: string, context: TriggerContext): P
 
 export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, context: TriggerContext) {
     if (!event.comment || !event.post || !event.author || !event.subreddit) {
-        console.log("Event is not in the required state");
         return;
     }
 

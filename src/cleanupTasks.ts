@@ -30,7 +30,6 @@ interface UserActive {
 }
 
 export async function cleanupDeletedAccounts (_: unknown, context: TriggerContext) {
-    console.log("Cleanup: Starting cleanup job");
     const items = await context.redis.zRange(CLEANUP_LOG_KEY, 0, new Date().getTime(), { by: "score" });
     if (items.length === 0) {
         // No user accounts need to be checked.
