@@ -1,10 +1,10 @@
 import { SettingsValues, TriggerContext, User } from "@devvit/public-api";
 import { CommentSubmit, CommentUpdate } from "@devvit/protos";
 import { getSubredditName, isModerator, replaceAll } from "./utility.js";
-import { addDays, addWeeks } from "date-fns";
+import { addWeeks } from "date-fns";
 import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
 import markdownEscape from "markdown-escape";
-import { CLEANUP_LOG_KEY, DAYS_BETWEEN_CHECKS } from "./cleanupTasks.js";
+import { setCleanupForUsers } from "./cleanupTasks.js";
 import { isLinkId } from "@devvit/shared-types/tid.js";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
@@ -219,7 +219,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     // Store the user's new score
     await context.redis.zAdd(POINTS_STORE_KEY, { member: parentComment.authorName, score: newScore });
     // Queue user for cleanup checks in 24 hours, overwriting existing value.
-    await context.redis.zAdd(CLEANUP_LOG_KEY, { member: parentComment.authorName, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime() });
+    await setCleanupForUsers([parentComment.authorName], context);
 
     // Queue a leaderboard update.
     await context.scheduler.runJob({

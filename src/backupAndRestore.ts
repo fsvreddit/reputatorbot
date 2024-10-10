@@ -4,9 +4,10 @@ import { POINTS_STORE_KEY } from "./thanksPoints.js";
 import { getSubredditName } from "./utility.js";
 import Ajv, { JSONSchemaType } from "ajv";
 import { restoreFormKey } from "./main.js";
-import { populateCleanupLog } from "./cleanupTasks.js";
+import { populateCleanupLogAndScheduleCleanup, scheduleAdhocCleanup } from "./cleanupTasks.js";
 import pluralize from "pluralize";
 import { AppSetting } from "./settings.js";
+import { ADHOC_CLEANUP_JOB } from "./constants.js";
 
 export interface CompactScore {
     u: string;
@@ -148,7 +149,7 @@ export async function restoreFormHandler (event: FormOnSubmitEvent<JSONObject>, 
 
     await context.redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => ({ member: score.u, score: score.s } as ZMember)));
 
-    await populateCleanupLog(context);
+    await populateCleanupLogAndScheduleCleanup(context);
 
     await context.scheduler.runJob({
         name: "updateLeaderboard",
@@ -160,6 +161,11 @@ export async function restoreFormHandler (event: FormOnSubmitEvent<JSONObject>, 
 
     // Remove "Install Date" redis key, because we can now assume that historical data is populated.
     await context.redis.del("InstallDate");
+
+    // Cancel any ad-hoc jobs and reschedule.
+    const existingJobs = await context.scheduler.listJobs();
+    await Promise.all(existingJobs.filter(job => job.name === ADHOC_CLEANUP_JOB).map(job => context.scheduler.cancelJob(job.id)));
+    await scheduleAdhocCleanup(context);
 }
 
 function backupScoreIsHigher (backupScore: CompactScore, existingScores: ZMember[]): boolean {
