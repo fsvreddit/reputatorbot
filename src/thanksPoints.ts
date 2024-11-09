@@ -132,7 +132,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     let containsUserCommand: boolean;
     if (settings[AppSetting.ThanksCommandUsesRegex]) {
         const regexes = userCommandList.map(command => new RegExp(command, "i"));
-        containsUserCommand = regexes.some(regex => event.comment && regex.test(event.comment.body))
+        containsUserCommand = regexes.some(regex => event.comment && regex.test(event.comment.body));
     } else {
         containsUserCommand = userCommandList.some(command => event.comment?.body.toLowerCase().includes(command));
     }

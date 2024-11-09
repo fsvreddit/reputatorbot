@@ -366,8 +366,8 @@ async function validateRegexes (event: SettingsFormFieldValidatorEvent<boolean>,
     await context.scheduler.runJob({
         name: VALIDATE_REGEX_JOB,
         runAt: new Date(),
-        data: { username: user.username }
-    })
+        data: { username: user.username },
+    });
 }
 
 export async function validateRegexJobHandler (event: ScheduledJobEvent<JSONObject | undefined>, context: TriggerContext) {
@@ -409,5 +409,5 @@ export async function validateRegexJobHandler (event: ScheduledJobEvent<JSONObje
         subject: `ReputatorBot settings on /r/${subredditName} are invalid`,
         text: message,
         to: username,
-    })
+    });
 }
