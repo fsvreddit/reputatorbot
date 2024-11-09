@@ -125,11 +125,21 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     const settings = await context.settings.getAll();
 
-    const userCommand = settings[AppSetting.ThanksCommand] as string | undefined;
+    const userCommandVal = settings[AppSetting.ThanksCommand] as string | undefined;
+    const userCommandList = userCommandVal?.split("\n").map(command => command.toLowerCase().trim()) ?? [];
     const modCommand = settings[AppSetting.ModThanksCommand] as string | undefined;
 
-    const commentContainsCommand = (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase())) ?? (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase()));
-    if (!commentContainsCommand) {
+    let containsUserCommand: boolean;
+    if (settings[AppSetting.ThanksCommandUsesRegex]) {
+        const regexes = userCommandList.map(command => new RegExp(command, "i"));
+        containsUserCommand = regexes.some(regex => event.comment && regex.test(event.comment.body))
+    } else {
+        containsUserCommand = userCommandList.some(command => event.comment?.body.toLowerCase().includes(command));
+    }
+
+    const containsModCommand = modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase().trim());
+
+    if (!containsUserCommand && !containsModCommand) {
         return;
     }
 
@@ -147,13 +157,12 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     const isMod = await isModerator(context, event.subreddit.name, event.author.name);
 
-    if (userCommand && event.comment.body.toLowerCase().includes(userCommand.toLowerCase()) && event.author.id !== event.post.authorId) {
-        const anyoneCanAwardPoints = settings[AppSetting.AnyoneCanAwardPoints] as boolean | undefined ?? false;
-        if (!anyoneCanAwardPoints) {
+    if (containsUserCommand && event.author.id !== event.post.authorId) {
+        if (!settings[AppSetting.AnyoneCanAwardPoints]) {
             console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
             return;
         }
-    } else if (modCommand && event.comment.body.toLowerCase().includes(modCommand.toLowerCase())) {
+    } else if (containsModCommand) {
         const userIsSuperuser = await getUserIsSuperuser(event.author.name, context);
 
         if (!isMod && !userIsSuperuser) {

@@ -1,7 +1,10 @@
-import { SettingsFormField, SettingsFormFieldValidatorEvent } from "@devvit/public-api";
+import { JSONObject, ScheduledJobEvent, SettingsFormField, SettingsFormFieldValidatorEvent, TriggerContext } from "@devvit/public-api";
+import { VALIDATE_REGEX_JOB } from "./constants.js";
+import pluralize from "pluralize";
 
 export enum AppSetting {
     ThanksCommand = "thanksCommand",
+    ThanksCommandUsesRegex = "thanksCommandUsesRegex",
     ModThanksCommand = "modThanksCommand",
     AnyoneCanAwardPoints = "anyoneCanAwardPoints",
     SuperUsers = "superUsers",
@@ -85,14 +88,22 @@ export const appSettings: SettingsFormField[] = [
         fields: [
             {
                 name: AppSetting.ThanksCommand,
-                type: "string",
-                label: "Command for users to award reputation points",
+                type: "paragraph",
+                label: "Command or commands for users to award reputation points",
+                helpText: "If you want to allow more than one command, place each command on a new line",
                 defaultValue: "!thanks",
                 onValidate: ({ value }) => {
                     if (!value) {
                         return "You must specify a command";
                     }
                 },
+            },
+            {
+                name: AppSetting.ThanksCommandUsesRegex,
+                type: "boolean",
+                label: "Treat user commands as regular expressions",
+                defaultValue: false,
+                onValidate: validateRegexes,
             },
             {
                 name: AppSetting.ModThanksCommand,
@@ -341,3 +352,62 @@ export const appSettings: SettingsFormField[] = [
         ],
     },
 ];
+
+async function validateRegexes (event: SettingsFormFieldValidatorEvent<boolean>, context: TriggerContext) {
+    if (!event.value) {
+        return;
+    }
+
+    const user = await context.reddit.getCurrentUser();
+    if (!user) {
+        return;
+    }
+
+    await context.scheduler.runJob({
+        name: VALIDATE_REGEX_JOB,
+        runAt: new Date(),
+        data: { username: user.username }
+    })
+}
+
+export async function validateRegexJobHandler (event: ScheduledJobEvent<JSONObject | undefined>, context: TriggerContext) {
+    const username = event.data?.username as string | undefined;
+    if (!username) {
+        return;
+    }
+
+    const settings = await context.settings.getAll();
+    if (!settings[AppSetting.ThanksCommandUsesRegex]) {
+        return;
+    }
+
+    console.log("Running settings validator");
+
+    const userCommandVal = settings[AppSetting.ThanksCommand] as string | undefined;
+    const userCommandList = userCommandVal?.split("\n").map(command => command.toLowerCase().trim()) ?? [];
+    const invalidCommands: string[] = [];
+
+    for (const command of userCommandList) {
+        try {
+            new RegExp(command);
+        } catch {
+            invalidCommands.push(command);
+        }
+    }
+
+    if (invalidCommands.length === 0) {
+        return;
+    }
+
+    let message = `The app settings are configured to treat user commands as regular expressions, but ${invalidCommands.length} ${pluralize("command", invalidCommands.length)} is not a valid regular expression:\n\n`;
+
+    message += invalidCommands.map(command => `* ${command}`).join("\n");
+
+    const subredditName = context.subredditName ?? (await context.reddit.getCurrentSubreddit()).name;
+
+    await context.reddit.sendPrivateMessage({
+        subject: `ReputatorBot settings on /r/${subredditName} are invalid`,
+        text: message,
+        to: username,
+    })
+}

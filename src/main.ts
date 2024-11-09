@@ -1,12 +1,12 @@
 import { Devvit } from "@devvit/public-api";
 import { handleThanksEvent } from "./thanksPoints.js";
-import { appSettings } from "./settings.js";
+import { appSettings, validateRegexJobHandler } from "./settings.js";
 import { onAppFirstInstall, onAppInstallOrUpgrade } from "./installEvents.js";
 import { updateLeaderboard } from "./leaderboard.js";
 import { cleanupDeletedAccounts } from "./cleanupTasks.js";
 import { backupAllScores, restoreForm, restoreFormHandler, showRestoreForm } from "./backupAndRestore.js";
 import { leaderboardCustomPost, createCustomPostMenuHandler, customPostForm, createCustomPostFormHandler } from "./customPost/index.js";
-import { ADHOC_CLEANUP_JOB, CLEANUP_JOB, UPDATE_LEADERBOARD_JOB } from "./constants.js";
+import { ADHOC_CLEANUP_JOB, CLEANUP_JOB, UPDATE_LEADERBOARD_JOB, VALIDATE_REGEX_JOB } from "./constants.js";
 
 Devvit.addSettings(appSettings);
 
@@ -38,6 +38,11 @@ Devvit.addSchedulerJob({
 Devvit.addSchedulerJob({
     name: ADHOC_CLEANUP_JOB,
     onRun: cleanupDeletedAccounts,
+});
+
+Devvit.addSchedulerJob({
+    name: VALIDATE_REGEX_JOB,
+    onRun: validateRegexJobHandler,
 });
 
 Devvit.addMenuItem({
