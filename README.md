@@ -1,4 +1,4 @@
-ReputatorBot is an app that allows users to award reputation points if a user has been helpful. Its main intention is to be used on help and advice subreddits to help indicate users who have a track record of providing useful solutions.
+ReputatorBot is an app that allows users to award reputation points if a user has been helpful. Its main use case is for help and advice subreddits to help indicate users who have a track record of providing useful solutions.
 
 It allows the OP of a post, a mod, or a trusted user to reply to a user and award them a point using a bot command, which will be stored as their user flair (optional from v1.2) and stored in a data store. The command can be customisable (by default it is `!thanks`).
 
@@ -43,8 +43,10 @@ This app is open source and licenced under the BSD 3-Clause Licence. You can fin
 
 ## Version History
 
-### Version 1.4.9
+### Next version
 
+* Support for multiple user keywords
+* Support for regular expressions for user keywords
 * Add feature to optionally notify a user who has been awarded a point
 * Internal efficiency changes
 
