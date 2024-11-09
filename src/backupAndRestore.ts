@@ -46,6 +46,13 @@ export async function backupAllScores (_: MenuItemOnPressEvent, context: Context
     }
 
     const currentScores = await context.redis.zRange(POINTS_STORE_KEY, 0, -1);
+    const currentScoreCount = await context.redis.zCard(POINTS_STORE_KEY);
+
+    if (currentScores.length === 1000 && currentScoreCount > 1000) {
+        context.ui.showToast("Sorry, due to an issue with the Dev Platform, this app is not currently able do backups for subs with > 1000 scores");
+        return;
+    }
+
     const compactScores = currentScores.map(score => ({ u: score.member, s: score.score } as CompactScore));
     const compressed = compressScores(compactScores);
 
