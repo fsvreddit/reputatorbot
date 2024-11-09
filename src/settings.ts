@@ -65,16 +65,14 @@ export enum TemplateDefaults {
     NotifyOnSuperuserTemplate = "Hello {{authorname}},\n\nNow that you have reached {{threshold}} points you can now award points yourself, even if you're not the OP. Please use the command \"{{pointscommand}}\" if you'd like to do this.\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
 }
 
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): void | string {
+function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>) {
     const flairTemplateRegex = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){4}[0-9a-f]{8}$/;
     if (event.value && !flairTemplateRegex.test(event.value)) {
         return "Invalid flair template ID";
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>): void | string {
+function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>) {
     if (!event.value || event.value.length !== 1) {
         return "You must choose an option";
     }
