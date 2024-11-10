@@ -1,9 +1,9 @@
-import {Context, CustomPostType, Devvit, Form, FormOnSubmitEvent, MenuItemOnPressEvent} from "@devvit/public-api";
-import {LeaderboardRow} from "./leaderboardRow.js";
-import {LeaderboardState} from "./state.js";
-import {customPostFormKey} from "../main.js";
-import {previewPost} from "./preview.js";
-import {getSubredditName} from "../utility.js";
+import { Context, CustomPostType, Devvit, Form, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent } from "@devvit/public-api";
+import { LeaderboardRow } from "./leaderboardRow.js";
+import { LeaderboardState } from "./state.js";
+import { customPostFormKey } from "../main.js";
+import { previewPost } from "./preview.js";
+import { getSubredditName } from "../utility.js";
 
 export const customPostForm: Form = {
     title: "Create Leaderboard Post",
@@ -36,11 +36,11 @@ export const customPostForm: Form = {
 };
 
 export interface CustomPostData {
-    postId: string,
-    numberOfUsers: number,
+    postId: string;
+    numberOfUsers: number;
 }
 
-export async function createCustomPostFormHandler (event: FormOnSubmitEvent, context: Context) {
+export async function createCustomPostFormHandler (event: FormOnSubmitEvent<JSONObject>, context: Context) {
     const redisKey = "customPostData";
 
     if (event.values.removeExisting) {
@@ -67,7 +67,7 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
 
     const newData: CustomPostData = {
         postId: post.id,
-        numberOfUsers: event.values.numberOfUsers as number ?? 20,
+        numberOfUsers: event.values.numberOfUsers as number | undefined ?? 20,
     };
 
     await context.redis.set(redisKey, JSON.stringify(newData));
@@ -76,7 +76,7 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent, con
         await post.sticky();
     }
 
-    context.ui.showToast({text: "Leaderboard post has been created successfully", appearance: "success"});
+    context.ui.showToast({ text: "Leaderboard post has been created successfully", appearance: "success" });
     context.ui.navigateTo(post);
 }
 
@@ -88,40 +88,70 @@ export const leaderboardCustomPost: CustomPostType = {
     name: "leaderboardCustomPost",
     description: "Post that displays ReputatorBot high scorers",
     height: "tall",
-    render: context => {
+    render: (context) => {
         const state = new LeaderboardState(context);
 
         return (
             <blocks height="tall">
-                <vstack minHeight={"100%"} minWidth={"100%"} width="100%" alignment="top center" gap="small" grow>
+                <vstack minHeight="100%" minWidth="100%" width="100%" alignment="top center" gap="small" grow>
                     <hstack alignment="center middle" minWidth="100%" border="thick" padding="small" gap="large">
                         <image imageHeight={48} imageWidth={48} url="podium.png" />
                         <vstack alignment="center middle" grow>
                             <text style="heading">Top scoring users</text>
                         </vstack>
-                        {state.leaderboardHelpUrl[0] ? <button icon="help" onPress={() => {
-                            state.context.ui.navigateTo(state.leaderboardHelpUrl[0]);
-                        }}></button> : <image imageHeight={48} imageWidth={48} url="podium.png" />}
+                        {state.leaderboardHelpUrl[0]
+                            ? (
+                                    <button
+                                        icon="help"
+                                        onPress={() => {
+                                            state.context.ui.navigateTo(state.leaderboardHelpUrl[0]);
+                                        }}
+                                    >
+                                    </button>
+                                )
+                            : <image imageHeight={48} imageWidth={48} url="podium.png" />}
                     </hstack>
                     <vstack alignment="middle center" padding="medium" gap="medium" width="100%" grow>
                         <vstack alignment="top start" gap="small" width="100%" grow>
-                            {state.leaderboard.slice((state.page - 1) * state.leaderboardPageSize, state.page * state.leaderboardPageSize).map(entry => <LeaderboardRow username={entry.username} score={entry.score} rank={entry.rank} navigateToProfile={() => {
-                                context.ui.navigateTo(`https://reddit.com/u/${entry.username}`);
-                            }} />)}
+                            {state.leaderboard.slice((state.page - 1) * state.leaderboardPageSize, state.page * state.leaderboardPageSize).map(entry => (
+                                <LeaderboardRow
+                                    username={entry.username}
+                                    score={entry.score}
+                                    rank={entry.rank}
+                                    navigateToProfile={() => {
+                                        context.ui.navigateTo(`https://reddit.com/u/${entry.username}`);
+                                    }}
+                                />
+                            ))}
                         </vstack>
                         <vstack alignment="bottom start" grow>
                             <hstack alignment="middle center" gap="small">
-                                <button disabled={state.page === 1} onPress={() => {
-                                    state.page -= 1;
-                                }}> &lt; </button>
+                                <button
+                                    disabled={state.page === 1}
+                                    onPress={() => {
+                                        state.page -= 1;
+                                    }}
+                                >
+                                    {" "}
+                                    &lt;
+                                </button>
                                 <spacer />
                                 <text onPress={() => {
                                     state.page = 1;
-                                }}>{state.page}</text>
+                                }}
+                                >
+                                    {state.page}
+                                </text>
                                 <spacer />
-                                <button disabled={state.page === state.maxPage} onPress={() => {
-                                    state.page += 1;
-                                }}> &gt; </button>
+                                <button
+                                    disabled={state.page === state.maxPage}
+                                    onPress={() => {
+                                        state.page += 1;
+                                    }}
+                                >
+                                    {" "}
+                                    &gt;
+                                </button>
                             </hstack>
                         </vstack>
                     </vstack>

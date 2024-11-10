@@ -1,11 +1,11 @@
-import {ScheduledJobEvent, TriggerContext, WikiPage, WikiPagePermissionLevel} from "@devvit/public-api";
-import {getSubredditName} from "./utility.js";
-import {LeaderboardMode, AppSetting} from "./settings.js";
-import {POINTS_STORE_KEY} from "./thanksPoints.js";
+import { JobContext, JSONObject, ScheduledJobEvent, WikiPage, WikiPagePermissionLevel } from "@devvit/public-api";
+import { getSubredditName } from "./utility.js";
+import { LeaderboardMode, AppSetting } from "./settings.js";
+import { POINTS_STORE_KEY } from "./thanksPoints.js";
 import markdownEscape from "markdown-escape";
 import pluralize from "pluralize";
 
-export async function updateLeaderboard (event: ScheduledJobEvent, context: TriggerContext) {
+export async function updateLeaderboard (event: ScheduledJobEvent<JSONObject | undefined>, context: JobContext) {
     const settings = await context.settings.getAll();
 
     const leaderboardMode = settings[AppSetting.LeaderboardMode] as string[] | undefined;
@@ -18,9 +18,9 @@ export async function updateLeaderboard (event: ScheduledJobEvent, context: Trig
         return;
     }
 
-    const leaderboardSize = settings[AppSetting.LeaderboardSize] as number ?? 20;
+    const leaderboardSize = settings[AppSetting.LeaderboardSize] as number | undefined ?? 20;
 
-    const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, leaderboardSize - 1, {by: "rank", reverse: true});
+    const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, leaderboardSize - 1, { by: "rank", reverse: true });
 
     const subredditName = await getSubredditName(context);
 

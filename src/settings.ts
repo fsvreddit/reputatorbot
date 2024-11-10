@@ -1,7 +1,10 @@
-import {SettingsFormField, SettingsFormFieldValidatorEvent} from "@devvit/public-api";
+import { JSONObject, ScheduledJobEvent, SettingsFormField, SettingsFormFieldValidatorEvent, TriggerContext } from "@devvit/public-api";
+import { VALIDATE_REGEX_JOB } from "./constants.js";
+import pluralize from "pluralize";
 
 export enum AppSetting {
     ThanksCommand = "thanksCommand",
+    ThanksCommandUsesRegex = "thanksCommandUsesRegex",
     ModThanksCommand = "modThanksCommand",
     AnyoneCanAwardPoints = "anyoneCanAwardPoints",
     SuperUsers = "superUsers",
@@ -18,6 +21,8 @@ export enum AppSetting {
     NotifyOnErrorTemplate = "notifyOnErrorTemplate",
     NotifyOnSuccess = "notifyOnSuccess",
     NotifyOnSuccessTemplate = "notifyOnSuccessTemplate",
+    NotifyAwardedUser = "notifyAwardedUser",
+    NotifyAwardedUserTemplate = "notifyAwardedUserTemplate",
     SetPostFlairOnThanks = "setPostFlairOnThanks",
     SetPostFlairText = "setPostFlairOnThanksText",
     SetPostFlairCSSClass = "setPostFlairOnThanksCSSClass",
@@ -45,9 +50,9 @@ export enum ReplyOptions {
 }
 
 const replyOptionChoices = [
-    {label: "No Notification", value: ReplyOptions.NoReply},
-    {label: "Send user a private message", value: ReplyOptions.ReplyByPM},
-    {label: "Reply as comment", value: ReplyOptions.ReplyAsComment},
+    { label: "No Notification", value: ReplyOptions.NoReply },
+    { label: "Send user a private message", value: ReplyOptions.ReplyByPM },
+    { label: "Reply as comment", value: ReplyOptions.ReplyAsComment },
 ];
 
 export enum LeaderboardMode {
@@ -59,17 +64,18 @@ export enum LeaderboardMode {
 export enum TemplateDefaults {
     NotifyOnErrorTemplate = "Hello {{authorname}},\n\nYou cannot award a point to yourself.\n\nPlease contact the mods if you have any questions.\n\n---\n\n^(I am a bot)",
     NotifyOnSuccessTemplate = "You have awarded 1 point to {{awardeeusername}}.\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
+    NotifyAwardedUserTemplate = "Hello {{awardeeusername}},\n\nYou have been awarded a point for your contribution! New score: {{score}}\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
     NotifyOnSuperuserTemplate = "Hello {{authorname}},\n\nNow that you have reached {{threshold}} points you can now award points yourself, even if you're not the OP. Please use the command \"{{pointscommand}}\" if you'd like to do this.\n\n---\n\n^(I am a bot - please contact the mods with any questions)",
 }
 
-function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>): void | string {
-    const flairTemplateRegex = /^[0-9a-z]{8}(?:-[0-9a-z]{4}){4}[0-9a-z]{8}$/;
+function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>) {
+    const flairTemplateRegex = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){4}[0-9a-f]{8}$/;
     if (event.value && !flairTemplateRegex.test(event.value)) {
         return "Invalid flair template ID";
     }
 }
 
-function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>): void | string {
+function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>) {
     if (!event.value || event.value.length !== 1) {
         return "You must choose an option";
     }
@@ -82,14 +88,22 @@ export const appSettings: SettingsFormField[] = [
         fields: [
             {
                 name: AppSetting.ThanksCommand,
-                type: "string",
-                label: "Command for users to award reputation points",
+                type: "paragraph",
+                label: "Command or commands for users to award reputation points",
+                helpText: "If you want to allow more than one command, place each command on a new line",
                 defaultValue: "!thanks",
-                onValidate: ({value}) => {
+                onValidate: ({ value }) => {
                     if (!value) {
                         return "You must specify a command";
                     }
                 },
+            },
+            {
+                name: AppSetting.ThanksCommandUsesRegex,
+                type: "boolean",
+                label: "Treat user commands as regular expressions",
+                defaultValue: false,
+                onValidate: validateRegexes,
             },
             {
                 name: AppSetting.ModThanksCommand,
@@ -168,9 +182,9 @@ export const appSettings: SettingsFormField[] = [
                 type: "select",
                 label: "Flair setting option",
                 options: [
-                    {label: "Set flair to new score, if flair unset or flair is numeric", value: ExistingFlairOverwriteHandling.OverwriteNumeric},
-                    {label: "Set flair to new score, if user has no flair", value: ExistingFlairOverwriteHandling.OverwriteAll},
-                    {label: "Never set flair", value: ExistingFlairOverwriteHandling.NeverSet},
+                    { label: "Set flair to new score, if flair unset or flair is numeric", value: ExistingFlairOverwriteHandling.OverwriteNumeric },
+                    { label: "Set flair to new score, if user has no flair", value: ExistingFlairOverwriteHandling.OverwriteAll },
+                    { label: "Never set flair", value: ExistingFlairOverwriteHandling.NeverSet },
                 ],
                 multiSelect: false,
                 defaultValue: [ExistingFlairOverwriteHandling.OverwriteNumeric],
@@ -221,6 +235,22 @@ export const appSettings: SettingsFormField[] = [
                 helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
                 defaultValue: TemplateDefaults.NotifyOnSuccessTemplate,
             },
+            {
+                name: AppSetting.NotifyAwardedUser,
+                type: "select",
+                label: "Notify users who have had a point awarded",
+                options: replyOptionChoices,
+                multiSelect: false,
+                defaultValue: [ReplyOptions.NoReply],
+                onValidate: selectFieldHasOptionChosen,
+            },
+            {
+                name: AppSetting.NotifyAwardedUserTemplate,
+                type: "paragraph",
+                label: "Template of message sent when a user successfully awards a point",
+                helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
+                defaultValue: TemplateDefaults.NotifyAwardedUserTemplate,
+            },
         ],
     },
     {
@@ -262,9 +292,9 @@ export const appSettings: SettingsFormField[] = [
                 name: AppSetting.LeaderboardMode,
                 type: "select",
                 options: [
-                    {label: "Off", value: LeaderboardMode.Off},
-                    {label: "Mod Only", value: LeaderboardMode.ModOnly},
-                    {label: "Default settings for wiki", value: LeaderboardMode.Public},
+                    { label: "Off", value: LeaderboardMode.Off },
+                    { label: "Mod Only", value: LeaderboardMode.ModOnly },
+                    { label: "Default settings for wiki", value: LeaderboardMode.Public },
                 ],
                 label: "Wiki Leaderboard Mode",
                 multiSelect: false,
@@ -276,7 +306,7 @@ export const appSettings: SettingsFormField[] = [
                 type: "string",
                 label: "Leaderboard Wiki Page",
                 defaultValue: "reputatorbotleaderboard",
-                onValidate: ({value}) => {
+                onValidate: ({ value }) => {
                     const wikiPageNameRegex = /^[\w/]+$/i;
                     if (value && !wikiPageNameRegex.test(value)) {
                         return "Invalid wiki page name. Wiki page name must consist of alphanumeric characters and / characters only.";
@@ -288,7 +318,7 @@ export const appSettings: SettingsFormField[] = [
                 type: "number",
                 label: "Leaderboard Size",
                 defaultValue: 20,
-                onValidate: ({value}) => {
+                onValidate: ({ value }) => {
                     if (value && (value < 10 || value > 100)) {
                         return "Value should be between 10 and 100";
                     }
@@ -322,3 +352,62 @@ export const appSettings: SettingsFormField[] = [
         ],
     },
 ];
+
+async function validateRegexes (event: SettingsFormFieldValidatorEvent<boolean>, context: TriggerContext) {
+    if (!event.value) {
+        return;
+    }
+
+    const user = await context.reddit.getCurrentUser();
+    if (!user) {
+        return;
+    }
+
+    await context.scheduler.runJob({
+        name: VALIDATE_REGEX_JOB,
+        runAt: new Date(),
+        data: { username: user.username },
+    });
+}
+
+export async function validateRegexJobHandler (event: ScheduledJobEvent<JSONObject | undefined>, context: TriggerContext) {
+    const username = event.data?.username as string | undefined;
+    if (!username) {
+        return;
+    }
+
+    const settings = await context.settings.getAll();
+    if (!settings[AppSetting.ThanksCommandUsesRegex]) {
+        return;
+    }
+
+    console.log("Running settings validator");
+
+    const userCommandVal = settings[AppSetting.ThanksCommand] as string | undefined;
+    const userCommandList = userCommandVal?.split("\n").map(command => command.toLowerCase().trim()) ?? [];
+    const invalidCommands: string[] = [];
+
+    for (const command of userCommandList) {
+        try {
+            new RegExp(command);
+        } catch {
+            invalidCommands.push(command);
+        }
+    }
+
+    if (invalidCommands.length === 0) {
+        return;
+    }
+
+    let message = `The app settings are configured to treat user commands as regular expressions, but ${invalidCommands.length} ${pluralize("command", invalidCommands.length)} is not a valid regular expression:\n\n`;
+
+    message += invalidCommands.map(command => `* ${command}`).join("\n");
+
+    const subredditName = context.subredditName ?? (await context.reddit.getCurrentSubreddit()).name;
+
+    await context.reddit.sendPrivateMessage({
+        subject: `ReputatorBot settings on /r/${subredditName} are invalid`,
+        text: message,
+        to: username,
+    });
+}

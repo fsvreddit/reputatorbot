@@ -1,13 +1,14 @@
-import {Context, UseIntervalResult, UseStateResult} from "@devvit/public-api";
-import {AppSetting} from "../settings.js";
-import {POINTS_STORE_KEY} from "../thanksPoints.js";
-import {CustomPostData} from "./index.js";
+import { Context, useInterval, UseIntervalResult, useState, UseStateResult } from "@devvit/public-api";
+import { AppSetting } from "../settings.js";
+import { POINTS_STORE_KEY } from "../thanksPoints.js";
+import { CustomPostData } from "./index.js";
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type LeaderboardEntry = {
     username: string;
     score: number;
     rank: number;
-}
+};
 
 export class LeaderboardState {
     readonly leaderboardSize: UseStateResult<number>;
@@ -20,12 +21,12 @@ export class LeaderboardState {
     readonly refresher: UseIntervalResult;
 
     constructor (public context: Context) {
-        this.leaderboardSize = context.useState<number>(async () => this.getLeaderboardSize());
-        this.leaderboardHelpUrl = context.useState<string>(async () => await context.settings.get<string>(AppSetting.LeaderboardHelpPage) ?? "");
-        this.leaderboardEntries = context.useState<LeaderboardEntry[]>(async () => this.fetchLeaderboard());
-        this.leaderboardPage = context.useState(1);
-        this.subredditName = context.useState<string>(async () => (await context.reddit.getCurrentSubreddit()).name);
-        this.refresher = context.useInterval(async () => this.updateLeaderboard(), 60000 * 60);
+        this.leaderboardSize = useState<number>(async () => this.getLeaderboardSize());
+        this.leaderboardHelpUrl = useState<string>(async () => await context.settings.get<string>(AppSetting.LeaderboardHelpPage) ?? "");
+        this.leaderboardEntries = useState<LeaderboardEntry[]>(async () => this.fetchLeaderboard());
+        this.leaderboardPage = useState(1);
+        this.subredditName = useState<string>(async () => (await context.reddit.getCurrentSubreddit()).name);
+        this.refresher = useInterval(async () => this.updateLeaderboard(), 60000 * 60);
         this.refresher.start();
     }
 
@@ -66,7 +67,7 @@ export class LeaderboardState {
 
     async fetchLeaderboard () {
         const leaderboard: LeaderboardEntry[] = [];
-        const items = await this.context.redis.zRange(POINTS_STORE_KEY, 0, this.leaderboardSize[0] - 1, {by: "rank", reverse: true});
+        const items = await this.context.redis.zRange(POINTS_STORE_KEY, 0, this.leaderboardSize[0] - 1, { by: "rank", reverse: true });
         let rank = 1;
         for (const item of items) {
             leaderboard.push({
