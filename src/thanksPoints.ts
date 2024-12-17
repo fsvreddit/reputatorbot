@@ -1,4 +1,4 @@
-import { SettingsValues, TriggerContext, User } from "@devvit/public-api";
+import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, SettingsValues, TriggerContext, User } from "@devvit/public-api";
 import { CommentSubmit, CommentUpdate } from "@devvit/protos";
 import { getSubredditName, isModerator, replaceAll } from "./utility.js";
 import { addWeeks } from "date-fns";
@@ -6,6 +6,7 @@ import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSett
 import markdownEscape from "markdown-escape";
 import { setCleanupForUsers } from "./cleanupTasks.js";
 import { isLinkId } from "@devvit/shared-types/tid.js";
+import { manualSetPointsForm } from "./main.js";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
 
@@ -228,17 +229,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const newScore = currentScore + 1;
 
     console.log(`${event.comment.id}: New score for ${parentComment.authorName} is ${newScore}`);
-    // Store the user's new score
-    await context.redis.zAdd(POINTS_STORE_KEY, { member: parentComment.authorName, score: newScore });
-    // Queue user for cleanup checks in 24 hours, overwriting existing value.
-    await setCleanupForUsers([parentComment.authorName], context);
-
-    // Queue a leaderboard update.
-    await context.scheduler.runJob({
-        name: "updateLeaderboard",
-        runAt: new Date(),
-        data: { reason: `Awarded a point to ${parentComment.authorName}. New score: ${newScore}` },
-    });
+    await setUserScore(parentComment.authorName, newScore, flairScoreIsNaN, context, settings);
 
     // Check to see if user has reached the superuser threshold.
     const autoSuperuserThreshold = settings[AppSetting.AutoSuperuserThreshold] as number | undefined ?? 0;
@@ -252,39 +243,6 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{pointscommand}}", modCommand);
 
         await replyToUser(context, notifyOnAutoSuperuser, parentCommentUser.username, message, parentComment.id);
-    }
-
-    const existingFlairOverwriteHandling = (settings[AppSetting.ExistingFlairHandling] as string[] | undefined ?? [ExistingFlairOverwriteHandling.OverwriteNumeric])[0] as ExistingFlairOverwriteHandling;
-
-    const shouldSetUserFlair = existingFlairOverwriteHandling !== ExistingFlairOverwriteHandling.NeverSet && (!flairScoreIsNaN || existingFlairOverwriteHandling === ExistingFlairOverwriteHandling.OverwriteAll);
-
-    if (shouldSetUserFlair) {
-        console.log(`${event.comment.id}: Setting points flair for ${parentCommentUser.username}. New score: ${newScore}`);
-
-        let cssClass = settings[AppSetting.CSSClass] as string | undefined;
-        if (!cssClass) {
-            cssClass = undefined;
-        }
-
-        let flairTemplate = settings[AppSetting.FlairTemplate] as string | undefined;
-        if (!flairTemplate) {
-            flairTemplate = undefined;
-        }
-
-        if (flairTemplate && cssClass) {
-            // Prioritise flair templates over CSS classes.
-            cssClass = undefined;
-        }
-
-        await context.reddit.setUserFlair({
-            subredditName: parentComment.subredditName,
-            username: parentCommentUser.username,
-            cssClass,
-            flairTemplateId: flairTemplate,
-            text: newScore.toString(),
-        });
-    } else {
-        console.log(`${event.comment.id}: Flair not set (option disabled or flair in wrong state)`);
     }
 
     const shouldSetPostFlair = settings[AppSetting.SetPostFlairOnThanks] as boolean | undefined ?? false;
@@ -339,4 +297,119 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{score}}", newScore.toString());
         await replyToUser(context, notifyAwardedUser, event.author.name, message, event.comment.id);
     }
+}
+
+async function setUserScore (username: string, newScore: number, flairScoreIsNaN: boolean, context: TriggerContext, settings: SettingsValues) {
+    // Store the user's new score
+    await context.redis.zAdd(POINTS_STORE_KEY, { member: username, score: newScore });
+    // Queue user for cleanup checks in 24 hours, overwriting existing value.
+    await setCleanupForUsers([username], context);
+
+    // Queue a leaderboard update.
+    await context.scheduler.runJob({
+        name: "updateLeaderboard",
+        runAt: new Date(),
+        data: { reason: `Awarded a point to ${username}. New score: ${newScore}` },
+    });
+
+    const existingFlairOverwriteHandling = (settings[AppSetting.ExistingFlairHandling] as string[] | undefined ?? [ExistingFlairOverwriteHandling.OverwriteNumeric])[0] as ExistingFlairOverwriteHandling;
+
+    const shouldSetUserFlair = existingFlairOverwriteHandling !== ExistingFlairOverwriteHandling.NeverSet && (!flairScoreIsNaN || existingFlairOverwriteHandling === ExistingFlairOverwriteHandling.OverwriteAll);
+
+    if (shouldSetUserFlair) {
+        console.log(`Setting points flair for ${username}. New score: ${newScore}`);
+
+        let cssClass = settings[AppSetting.CSSClass] as string | undefined;
+        if (!cssClass) {
+            cssClass = undefined;
+        }
+
+        let flairTemplate = settings[AppSetting.FlairTemplate] as string | undefined;
+        if (!flairTemplate) {
+            flairTemplate = undefined;
+        }
+
+        if (flairTemplate && cssClass) {
+            // Prioritise flair templates over CSS classes.
+            cssClass = undefined;
+        }
+
+        const subredditName = await getSubredditName(context);
+
+        await context.reddit.setUserFlair({
+            subredditName,
+            username,
+            cssClass,
+            flairTemplateId: flairTemplate,
+            text: newScore.toString(),
+        });
+    } else {
+        console.log(`${username}: Flair not set (option disabled or flair in wrong state)`);
+    }
+}
+
+export async function handleManualPointSetting (event: MenuItemOnPressEvent, context: Context) {
+    const comment = await context.reddit.getCommentById(event.targetId);
+    let user: User | undefined;
+    try {
+        user = await context.reddit.getUserByUsername(comment.authorName);
+    } catch {
+        //
+    }
+
+    if (!user) {
+        context.ui.showToast("Cannot set points. User may be shadowbanned.");
+        return;
+    }
+
+    const settings = await context.settings.getAll();
+    const { currentScore } = await getCurrentScore(user, context, settings);
+
+    const fields = [
+        {
+            name: "newScore",
+            type: "number",
+            defaultValue: currentScore,
+            label: `Enter a new score for ${comment.authorName}`,
+            helpText: "Warning: This will overwrite the score that currently exists",
+            multiSelect: false,
+            required: true,
+        },
+    ];
+
+    context.ui.showForm(manualSetPointsForm, { fields });
+}
+
+export async function manualSetPointsFormHandler (event: FormOnSubmitEvent<JSONObject>, context: Context) {
+    if (!context.commentId) {
+        context.ui.showToast("An error occurred setting the user's score.");
+        return;
+    }
+
+    const newScore = event.values.newScore as number | undefined;
+    if (!newScore) {
+        context.ui.showToast("You must enter a new score");
+        return;
+    }
+
+    const comment = await context.reddit.getCommentById(context.commentId);
+
+    let user: User | undefined;
+    try {
+        user = await context.reddit.getUserByUsername(comment.authorName);
+    } catch {
+        //
+    }
+
+    if (!user) {
+        context.ui.showToast("Cannot set points. User may be shadowbanned.");
+        return;
+    }
+
+    const settings = await context.settings.getAll();
+
+    const { flairScoreIsNaN } = await getCurrentScore(user, context, settings);
+    await setUserScore(comment.authorName, newScore, flairScoreIsNaN, context, settings);
+
+    context.ui.showToast(`Score for ${comment.authorName} is now ${newScore}`);
 }

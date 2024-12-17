@@ -1,5 +1,5 @@
-import { Devvit } from "@devvit/public-api";
-import { handleThanksEvent } from "./thanksPoints.js";
+import { Devvit, FormField } from "@devvit/public-api";
+import { handleManualPointSetting, handleThanksEvent, manualSetPointsFormHandler } from "./thanksPoints.js";
 import { appSettings, validateRegexJobHandler } from "./settings.js";
 import { onAppFirstInstall, onAppInstallOrUpgrade } from "./installEvents.js";
 import { updateLeaderboard } from "./leaderboard.js";
@@ -57,6 +57,15 @@ Devvit.addMenuItem({
     forUserType: "moderator",
     location: "subreddit",
     onPress: showRestoreForm,
+});
+
+export const manualSetPointsForm = Devvit.createForm(data => ({ fields: data.fields as FormField[] }), manualSetPointsFormHandler);
+
+Devvit.addMenuItem({
+    label: "Set ReputatorBot score manually",
+    forUserType: "moderator",
+    location: "comment",
+    onPress: handleManualPointSetting,
 });
 
 export const restoreFormKey = Devvit.createForm(restoreForm, restoreFormHandler);
