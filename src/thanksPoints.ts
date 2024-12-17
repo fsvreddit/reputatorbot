@@ -58,8 +58,12 @@ async function getCurrentScore (user: User, context: TriggerContext, settings: S
     }
 
     let scoreFromFlair: number;
+    const numberRegex = /^\d+$/;
+
     if (!userFlair?.flairText || userFlair.flairText === "-") {
         scoreFromFlair = 0;
+    } else if (!numberRegex.test(userFlair.flairText)) {
+        scoreFromFlair = NaN;
     } else {
         scoreFromFlair = parseInt(userFlair.flairText);
     }
