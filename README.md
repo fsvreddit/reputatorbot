@@ -43,6 +43,10 @@ This app is open source and licenced under the BSD 3-Clause Licence. You can fin
 
 ## Version History
 
+### v1.5.2
+
+* Fixes a security vulnerability relating to menu items
+
 ### v1.5.1
 
 * Flairs that start with a number but are not purely numeric are no longer treated as if they are the user's existing score
