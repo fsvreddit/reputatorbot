@@ -295,7 +295,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         message = replaceAll(message, "{{permalink}}", parentComment.permalink);
         message = replaceAll(message, "{{score}}", newScore.toString());
-        await replyToUser(context, notifyAwardedUser, event.author.name, message, event.comment.id);
+        await replyToUser(context, notifyAwardedUser, event.author.name, message, parentComment.id);
     }
 }
 
