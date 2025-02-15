@@ -139,7 +139,7 @@ export async function scheduleAdhocCleanup (context: TriggerContext) {
         console.log(`Cleanup: Next ad-hoc cleanup: ${nextCleanupJobTime.toUTCString()}`);
         await context.scheduler.runJob({
             name: ADHOC_CLEANUP_JOB,
-            runAt: nextCleanupJobTime,
+            runAt: nextCleanupJobTime < new Date() ? new Date() : nextCleanupJobTime,
         });
     } else {
         console.log(`Cleanup: Next entry in cleanup log is after next scheduled run (${nextCleanupTime.toUTCString()}).`);

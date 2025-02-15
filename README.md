@@ -43,6 +43,10 @@ This app is open source and licenced under the BSD 3-Clause Licence. You can fin
 
 ## Version History
 
+### v1.5.3
+
+* Ensure that "you have been awarded" messages go to the awardee, not the awarder
+
 ### v1.5.2
 
 * Fixes a security vulnerability relating to menu items
