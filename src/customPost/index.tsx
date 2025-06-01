@@ -53,9 +53,7 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent<JSON
     }
 
     let postTitle = event.values.postTitle as string | undefined;
-    if (!postTitle) {
-        postTitle = "ReputatorBot High Scores";
-    }
+    postTitle ??= "ReputatorBot High Scores";
 
     const subredditName = await getSubredditName(context);
 

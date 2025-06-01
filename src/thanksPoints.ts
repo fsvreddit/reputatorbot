@@ -50,10 +50,7 @@ async function getCurrentScore (user: User, context: TriggerContext, settings: S
 
     let scoreFromRedis: number | undefined;
     try {
-        scoreFromRedis = await context.redis.zScore(POINTS_STORE_KEY, user.username);
-        if (!scoreFromRedis) {
-            scoreFromRedis = 0;
-        }
+        scoreFromRedis = await context.redis.zScore(POINTS_STORE_KEY, user.username) ?? 0;
     } catch {
         scoreFromRedis = 0;
     }
@@ -251,6 +248,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         let postFlairCSSClass = settings[AppSetting.SetPostFlairCSSClass] as string | undefined;
         let postFlairTemplate = settings[AppSetting.SetPostFlairTemplate] as string | undefined;
 
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (!postFlairText) {
             postFlairText = undefined;
         }
@@ -258,6 +256,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         if (!postFlairCSSClass || postFlairTemplate) {
             postFlairCSSClass = undefined;
         }
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (!postFlairTemplate) {
             postFlairTemplate = undefined;
         }
@@ -320,11 +319,13 @@ async function setUserScore (username: string, newScore: number, flairScoreIsNaN
         console.log(`Setting points flair for ${username}. New score: ${newScore}`);
 
         let cssClass = settings[AppSetting.CSSClass] as string | undefined;
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (!cssClass) {
             cssClass = undefined;
         }
 
         let flairTemplate = settings[AppSetting.FlairTemplate] as string | undefined;
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (!flairTemplate) {
             flairTemplate = undefined;
         }

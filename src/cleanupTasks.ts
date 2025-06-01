@@ -1,7 +1,7 @@
 import { TriggerContext, User, ZMember } from "@devvit/public-api";
 import { addDays, addMinutes, subMinutes } from "date-fns";
 import { POINTS_STORE_KEY } from "./thanksPoints.js";
-import { parseExpression } from "cron-parser";
+import { CronExpressionParser } from "cron-parser";
 import { ADHOC_CLEANUP_JOB, CLEANUP_JOB_CRON } from "./constants.js";
 
 const CLEANUP_LOG_KEY = "cleanupStore";
@@ -132,7 +132,7 @@ export async function scheduleAdhocCleanup (context: TriggerContext) {
 
     const nextCleanupTime = new Date(nextEntries[0].score);
     const nextCleanupJobTime = addMinutes(nextCleanupTime, 5);
-    const nextScheduledTime = parseExpression(CLEANUP_JOB_CRON).next().toDate();
+    const nextScheduledTime = CronExpressionParser.parse(CLEANUP_JOB_CRON).next().toDate();
 
     if (nextCleanupJobTime < subMinutes(nextScheduledTime, 5)) {
         // It's worth running an ad-hoc job.
