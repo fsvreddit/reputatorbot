@@ -15,6 +15,7 @@ export enum AppSetting {
     UsersWhoCannotAwardPoints = "usersWhoCantAwardPoints",
     ExistingFlairHandling = "existingFlairHandling",
     ExistingFlairCosmeticHandling = "existingFlairCosmeticHandling",
+    FlairTextTemplate = "thanksFlairTextTemplate",
     CSSClass = "thanksCSSClass",
     FlairTemplate = "thanksFlairTemplate",
     NotifyOnError = "notifyOnError",
@@ -34,7 +35,6 @@ export enum AppSetting {
     PostFlairTextToIgnore = "postFlairTextToIgnore",
     EnableBackup = "enableBackup",
     EnableRestore = "enableRestore",
-    PrioritiseScoreFromFlair = "prioritiseScoreFromFlair",
 }
 
 export enum ExistingFlairOverwriteHandling {
@@ -164,13 +164,6 @@ export const appSettings: SettingsFormField[] = [
                 type: "string",
                 label: "Optional. A list of post flairs (comma separated) for posts where points cannot be awarded",
             },
-            {
-                name: AppSetting.PrioritiseScoreFromFlair,
-                type: "boolean",
-                label: "Use score from flair in precedence over score from database",
-                helpText: "This may be useful if you want to be able to manually set a score via a flair.",
-                defaultValue: false,
-            },
         ],
     },
     {
@@ -189,6 +182,20 @@ export const appSettings: SettingsFormField[] = [
                 multiSelect: false,
                 defaultValue: [ExistingFlairOverwriteHandling.OverwriteNumeric],
                 onValidate: selectFieldHasOptionChosen,
+            },
+            {
+                name: AppSetting.FlairTextTemplate,
+                type: "string",
+                label: "Template for points flair text",
+                defaultValue: "{{points}}",
+                helpText: "The template for the flair text. Must include a placeholder {{points}}",
+                onValidate: ({ value }) => {
+                    const regex = /{{points}}/g;
+                    const matches = value?.match(regex);
+                    if (!matches || matches.length > 1) {
+                        return "You must provide a flair text template that includes exactly one placeholder {{points}}";
+                    }
+                },
             },
             {
                 name: AppSetting.CSSClass,

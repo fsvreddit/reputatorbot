@@ -43,6 +43,10 @@ This app is open source and licenced under the BSD 3-Clause Licence. You can fin
 
 ## Version History
 
+### v1.6 (Coming soon!)
+
+* Allow customisable flair text using a placeholder
+
 ### v1.5.4
 
 * No user facing changes - Devvit update only.
