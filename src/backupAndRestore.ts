@@ -1,7 +1,6 @@
 import { Context, Form, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, WikiPage, WikiPagePermissionLevel, ZMember } from "@devvit/public-api";
 import pako from "pako";
 import { POINTS_STORE_KEY } from "./thanksPoints.js";
-import { getSubredditName } from "./utility.js";
 import Ajv, { JSONSchemaType } from "ajv";
 import { restoreFormKey } from "./main.js";
 import { populateCleanupLogAndScheduleCleanup, scheduleAdhocCleanup } from "./cleanupTasks.js";
@@ -56,7 +55,7 @@ export async function backupAllScores (_: MenuItemOnPressEvent, context: Context
     const compactScores = currentScores.map(score => ({ u: score.member, s: score.score } as CompactScore));
     const compressed = compressScores(compactScores);
 
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
     let wikiPage: WikiPage | undefined;
     try {
         wikiPage = await context.reddit.getWikiPage(subredditName, BACKUP_WIKI_PAGE);
@@ -95,7 +94,7 @@ export async function showRestoreForm (_: MenuItemOnPressEvent, context: Context
         return;
     }
 
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
     let wikiPage: WikiPage | undefined;
     try {
         wikiPage = await context.reddit.getWikiPage(subredditName, BACKUP_WIKI_PAGE);
@@ -114,7 +113,7 @@ export async function showRestoreForm (_: MenuItemOnPressEvent, context: Context
 export async function restoreFormHandler (event: FormOnSubmitEvent<JSONObject>, context: Context) {
     const chosenAction = (event.values.action as string[])[0];
 
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
     let wikiPage: WikiPage | undefined;
     try {
         wikiPage = await context.reddit.getWikiPage(subredditName, BACKUP_WIKI_PAGE);

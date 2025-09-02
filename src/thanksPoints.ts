@@ -1,6 +1,6 @@
 import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, SettingsValues, TriggerContext, User } from "@devvit/public-api";
 import { CommentSubmit, CommentUpdate } from "@devvit/protos";
-import { getSubredditName, isModerator, replaceAll } from "./utility.js";
+import { isModerator, replaceAll } from "./utility.js";
 import { addWeeks } from "date-fns";
 import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
 import markdownEscape from "markdown-escape";
@@ -14,7 +14,7 @@ async function replyToUser (context: TriggerContext, replyMode: ReplyOptions, to
     if (replyMode === ReplyOptions.NoReply) {
         return;
     } else if (replyMode === ReplyOptions.ReplyByPM) {
-        const subredditName = await getSubredditName(context);
+        const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
         try {
             await context.reddit.sendPrivateMessage({
                 subject: `Message from ReputatorBot on ${subredditName}`,
@@ -45,7 +45,7 @@ interface ScoreResult {
 }
 
 async function getCurrentScore (user: User, context: TriggerContext, settings: SettingsValues): Promise<ScoreResult> {
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
     const userFlair = await user.getUserFlairBySubreddit(subredditName);
 
     let scoreFromRedis: number | undefined;
@@ -335,7 +335,7 @@ async function setUserScore (username: string, newScore: number, flairScoreIsNaN
             cssClass = undefined;
         }
 
-        const subredditName = await getSubredditName(context);
+        const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
 
         await context.reddit.setUserFlair({
             subredditName,

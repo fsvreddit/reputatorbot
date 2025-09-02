@@ -3,7 +3,6 @@ import { LeaderboardRow } from "./leaderboardRow.js";
 import { LeaderboardState } from "./state.js";
 import { customPostFormKey } from "../main.js";
 import { previewPost } from "./preview.js";
-import { getSubredditName } from "../utility.js";
 
 export const customPostForm: Form = {
     title: "Create Leaderboard Post",
@@ -55,7 +54,7 @@ export async function createCustomPostFormHandler (event: FormOnSubmitEvent<JSON
     let postTitle = event.values.postTitle as string | undefined;
     postTitle ??= "ReputatorBot High Scores";
 
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
 
     const post = await context.reddit.submitPost({
         subredditName,
