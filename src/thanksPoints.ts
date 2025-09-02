@@ -50,37 +50,32 @@ async function getCurrentScore (user: User, context: TriggerContext, settings: S
     const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
     const userFlair = await user.getUserFlairBySubreddit(subredditName);
 
-    const scoreFromRedis = await context.redis.zScore(POINTS_STORE_KEY, user.username) ?? 0;
+    const scoreFromRedis = await context.redis.zScore(POINTS_STORE_KEY, user.username);
+    let scoreFromFlair: number | undefined;
+    let flairIsNumber = false;
 
-    if (!userFlair?.flairText) {
-        return {
-            score: scoreFromRedis,
-            userHasFlair: false,
-            flairIsPointsFlair: false,
-            flairIsNumber: false,
-        };
+    if (userFlair?.flairText) {
+        const flairTextTemplate = settings[AppSetting.FlairTextTemplate] as string | undefined ?? "{{points}}";
+        const numberRegex = "(?:\\b|\\D)(\\d+)(?:\\b|\\D)";
+
+        const regex = new RegExp(flairTextTemplate.replace("{{points}}", numberRegex));
+        const matches = regex.exec(userFlair.flairText);
+
+        scoreFromFlair = matches ? parseInt(matches[1]) : undefined;
+
+        if (!scoreFromFlair) {
+            // Fallback and see if the user flair includes the number anywhere in the flair
+            const fallbackRegex = new RegExp(numberRegex);
+            const fallbackMatches = fallbackRegex.exec(userFlair.flairText);
+            scoreFromFlair = fallbackMatches ? parseInt(fallbackMatches[1]) : undefined;
+        }
+
+        flairIsNumber = !isNaN(parseInt(userFlair.flairText));
     }
-
-    const flairTextTemplate = settings[AppSetting.FlairTextTemplate] as string | undefined ?? "{{points}}";
-    const numberRegex = "(?:\\b|\\D)(\\d+)(?:\\b|\\D)";
-
-    const regex = new RegExp(flairTextTemplate.replace("{{points}}", numberRegex));
-    const matches = regex.exec(userFlair.flairText);
-
-    let scoreFromFlair = matches ? parseInt(matches[1]) : undefined;
-
-    if (!scoreFromFlair) {
-        // Fallback and see if the user flair includes the number anywhere in the flair
-        const fallbackRegex = new RegExp(numberRegex);
-        const fallbackMatches = fallbackRegex.exec(userFlair.flairText);
-        scoreFromFlair = fallbackMatches ? parseInt(fallbackMatches[1]) : undefined;
-    }
-
-    const flairIsNumber = !isNaN(parseInt(userFlair.flairText));
 
     return {
-        score: scoreFromRedis,
-        userHasFlair: true,
+        score: scoreFromRedis ?? scoreFromFlair ?? 0,
+        userHasFlair: userFlair?.flairText !== undefined,
         flairIsPointsFlair: scoreFromFlair === scoreFromRedis,
         flairIsNumber,
     };
