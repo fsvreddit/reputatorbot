@@ -293,7 +293,7 @@ export const appSettings: SettingsFormField[] = [
     },
     {
         type: "group",
-        label: "Leaderboard Settings",
+        label: "Leaderboard Wiki Page Settings",
         fields: [
             {
                 name: AppSetting.LeaderboardMode,
@@ -304,6 +304,7 @@ export const appSettings: SettingsFormField[] = [
                     { label: "Default settings for wiki", value: LeaderboardMode.Public },
                 ],
                 label: "Wiki Leaderboard Mode",
+                helpText: "Controls the visibility of the leaderboard on the wiki. NOTE: The leaderboard wiki page will only update if you have not opted in to the new Wiki experience",
                 multiSelect: false,
                 defaultValue: [LeaderboardMode.Off],
                 onValidate: selectFieldHasOptionChosen,
