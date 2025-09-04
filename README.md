@@ -46,6 +46,7 @@ This app is open source and licenced under the BSD 3-Clause Licence. You can fin
 ### v1.6 (Coming soon!)
 
 * Allow customisable flair text using a placeholder
+* Allow regular and mod-only keyword to be the same
 
 ### v1.5.4
 

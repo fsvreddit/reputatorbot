@@ -159,7 +159,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     const isMod = await isModerator(context, event.subreddit.name, event.author.name);
 
-    if (containsUserCommand && event.author.id !== event.post.authorId) {
+    if (containsUserCommand && !containsModCommand && event.author.id !== event.post.authorId) {
         if (!settings[AppSetting.AnyoneCanAwardPoints]) {
             console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
             return;
