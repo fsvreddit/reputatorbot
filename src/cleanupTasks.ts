@@ -18,10 +18,21 @@ async function userActive (username: string, context: TriggerContext): Promise<b
     let user: User | undefined;
     try {
         user = await context.reddit.getUserByUsername(username);
+        return user !== undefined;
+    } catch {
+        //
+    }
+
+    // Fall back to mod note check method
+    try {
+        await context.reddit.getModNotes({
+            subreddit: context.subredditName ?? await context.reddit.getCurrentSubredditName(),
+            user: username,
+        }).all();
+        return true;
     } catch {
         return false;
     }
-    return user !== undefined;
 }
 
 interface UserActive {

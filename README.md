@@ -31,7 +31,7 @@ This application stores the reputation score awarded by the app for each user in
 
 If the application is removed from a subreddit, all data is deleted although the flairs will remain. If the application is subsequently re-installed, the existing flairs will be used as a basis for new point awarding.
 
-Data for users is removed from the app within 48 hours from v1.3 onwards.
+Data for users who are deleted is removed from the app within 28 days.
 
 ## Acknowledgements
 
@@ -42,6 +42,11 @@ Data for users is removed from the app within 48 hours from v1.3 onwards.
 This app is open source and licenced under the BSD 3-Clause Licence. You can find the source code on GitHub [here](https://github.com/fsvreddit/reputatorbot).
 
 ## Version History
+
+### v1.6 (Coming soon!)
+
+* Allow customisable flair text using a placeholder
+* Allow regular and mod-only keyword to be the same
 
 ### v1.5.4
 

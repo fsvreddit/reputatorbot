@@ -1,11 +1,11 @@
 import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, SettingsValues, TriggerContext, User } from "@devvit/public-api";
 import { CommentSubmit, CommentUpdate } from "@devvit/protos";
-import { getSubredditName, isModerator, replaceAll } from "./utility.js";
+import { isModerator, replaceAll } from "./utility.js";
 import { addWeeks } from "date-fns";
 import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
 import markdownEscape from "markdown-escape";
 import { setCleanupForUsers } from "./cleanupTasks.js";
-import { isLinkId } from "@devvit/shared-types/tid.js";
+import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { manualSetPointsForm } from "./main.js";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
@@ -14,7 +14,7 @@ async function replyToUser (context: TriggerContext, replyMode: ReplyOptions, to
     if (replyMode === ReplyOptions.NoReply) {
         return;
     } else if (replyMode === ReplyOptions.ReplyByPM) {
-        const subredditName = await getSubredditName(context);
+        const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
         try {
             await context.reddit.sendPrivateMessage({
                 subject: `Message from ReputatorBot on ${subredditName}`,
@@ -40,44 +40,44 @@ async function replyToUser (context: TriggerContext, replyMode: ReplyOptions, to
 }
 
 interface ScoreResult {
-    currentScore: number;
-    flairScoreIsNaN: boolean;
+    score: number;
+    userHasFlair: boolean;
+    flairIsPointsFlair: boolean;
+    flairIsNumber: boolean;
 }
 
 async function getCurrentScore (user: User, context: TriggerContext, settings: SettingsValues): Promise<ScoreResult> {
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
     const userFlair = await user.getUserFlairBySubreddit(subredditName);
 
-    let scoreFromRedis: number | undefined;
-    try {
-        scoreFromRedis = await context.redis.zScore(POINTS_STORE_KEY, user.username) ?? 0;
-    } catch {
-        scoreFromRedis = 0;
-    }
+    const scoreFromRedis = await context.redis.zScore(POINTS_STORE_KEY, user.username);
+    let scoreFromFlair: number | undefined;
+    let flairIsNumber = false;
 
-    let scoreFromFlair: number;
-    const numberRegex = /^\d+$/;
+    if (userFlair?.flairText) {
+        const flairTextTemplate = settings[AppSetting.FlairTextTemplate] as string | undefined ?? "{{points}}";
+        const numberRegex = "(?:\\b|\\D)(\\d+)(?:\\b|\\D)";
 
-    if (!userFlair?.flairText || userFlair.flairText === "-") {
-        scoreFromFlair = 0;
-    } else if (!numberRegex.test(userFlair.flairText)) {
-        scoreFromFlair = NaN;
-    } else {
-        scoreFromFlair = parseInt(userFlair.flairText);
-    }
+        const regex = new RegExp(flairTextTemplate.replace("{{points}}", numberRegex));
+        const matches = regex.exec(userFlair.flairText);
 
-    const flairScoreIsNaN = isNaN(scoreFromFlair);
+        scoreFromFlair = matches ? parseInt(matches[1]) : undefined;
 
-    if (settings[AppSetting.PrioritiseScoreFromFlair] && !flairScoreIsNaN) {
-        return {
-            currentScore: scoreFromFlair,
-            flairScoreIsNaN,
-        };
+        if (!scoreFromFlair) {
+            // Fallback and see if the user flair includes the number anywhere in the flair
+            const fallbackRegex = new RegExp(numberRegex);
+            const fallbackMatches = fallbackRegex.exec(userFlair.flairText);
+            scoreFromFlair = fallbackMatches ? parseInt(fallbackMatches[1]) : undefined;
+        }
+
+        flairIsNumber = !isNaN(parseInt(userFlair.flairText));
     }
 
     return {
-        currentScore: !flairScoreIsNaN && scoreFromFlair > scoreFromRedis ? scoreFromFlair : scoreFromRedis,
-        flairScoreIsNaN,
+        score: scoreFromRedis ?? scoreFromFlair ?? 0,
+        userHasFlair: userFlair?.flairText !== undefined,
+        flairIsPointsFlair: scoreFromFlair === scoreFromRedis,
+        flairIsNumber,
     };
 }
 
@@ -103,8 +103,8 @@ async function getUserIsSuperuser (username: string, context: TriggerContext): P
         if (!user) {
             return false;
         }
-        const { currentScore } = await getCurrentScore(user, context, settings);
-        return currentScore >= autoSuperuserThreshold;
+        const { score } = await getCurrentScore(user, context, settings);
+        return score >= autoSuperuserThreshold;
     } else {
         return false;
     }
@@ -159,7 +159,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
 
     const isMod = await isModerator(context, event.subreddit.name, event.author.name);
 
-    if (containsUserCommand && event.author.id !== event.post.authorId) {
+    if (containsUserCommand && !containsModCommand && event.author.id !== event.post.authorId) {
         if (!settings[AppSetting.AnyoneCanAwardPoints]) {
             console.log(`${event.comment.id}: points attempt made by ${event.author.name} who is not the OP`);
             return;
@@ -222,16 +222,21 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         console.log("Parent comment user is shadowbanned or suspended. Cannot proceed.");
         return;
     }
-    const { currentScore, flairScoreIsNaN } = await getCurrentScore(parentCommentUser, context, settings);
-    const newScore = currentScore + 1;
+    const existingScore = await getCurrentScore(parentCommentUser, context, settings);
+    const newScore: ScoreResult = {
+        score: existingScore.score + 1,
+        flairIsPointsFlair: existingScore.flairIsPointsFlair,
+        userHasFlair: existingScore.userHasFlair,
+        flairIsNumber: existingScore.flairIsNumber,
+    };
 
-    console.log(`${event.comment.id}: New score for ${parentComment.authorName} is ${newScore}`);
-    await setUserScore(parentComment.authorName, newScore, flairScoreIsNaN, context, settings);
+    console.log(`${event.comment.id}: New score for ${parentComment.authorName} is ${newScore.score}`);
+    await setUserScore(parentComment.authorName, newScore, context, settings);
 
     // Check to see if user has reached the superuser threshold.
     const autoSuperuserThreshold = settings[AppSetting.AutoSuperuserThreshold] as number | undefined ?? 0;
     const notifyOnAutoSuperuser = (settings[AppSetting.NotifyOnAutoSuperuser] as string[] | undefined ?? [ReplyOptions.NoReply])[0] as ReplyOptions;
-    if (autoSuperuserThreshold && modCommand && newScore === autoSuperuserThreshold && notifyOnAutoSuperuser !== ReplyOptions.NoReply) {
+    if (autoSuperuserThreshold && modCommand && newScore.score === autoSuperuserThreshold && notifyOnAutoSuperuser !== ReplyOptions.NoReply) {
         console.log(`${event.comment.id}: ${parentCommentUser.username} has reached the auto superuser threshold. Notifying.`);
         let message = settings[AppSetting.NotifyOnAutoSuperuserTemplate] as string | undefined ?? TemplateDefaults.NotifyOnSuperuserTemplate;
         message = replaceAll(message, "{{authorname}}", parentCommentUser.username);
@@ -283,7 +288,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         message = replaceAll(message, "{{permalink}}", parentComment.permalink);
-        message = replaceAll(message, "{{score}}", newScore.toString());
+        message = replaceAll(message, "{{score}}", newScore.score.toString());
         await replyToUser(context, notifyOnSuccess, event.author.name, message, event.comment.id);
     }
 
@@ -293,14 +298,14 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
         message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
         message = replaceAll(message, "{{permalink}}", parentComment.permalink);
-        message = replaceAll(message, "{{score}}", newScore.toString());
+        message = replaceAll(message, "{{score}}", newScore.score.toString());
         await replyToUser(context, notifyAwardedUser, event.author.name, message, parentComment.id);
     }
 }
 
-async function setUserScore (username: string, newScore: number, flairScoreIsNaN: boolean, context: TriggerContext, settings: SettingsValues) {
+async function setUserScore (username: string, newScore: ScoreResult, context: TriggerContext, settings: SettingsValues) {
     // Store the user's new score
-    await context.redis.zAdd(POINTS_STORE_KEY, { member: username, score: newScore });
+    await context.redis.zAdd(POINTS_STORE_KEY, { member: username, score: newScore.score });
     // Queue user for cleanup checks in 24 hours, overwriting existing value.
     await setCleanupForUsers([username], context);
 
@@ -308,15 +313,22 @@ async function setUserScore (username: string, newScore: number, flairScoreIsNaN
     await context.scheduler.runJob({
         name: "updateLeaderboard",
         runAt: new Date(),
-        data: { reason: `Awarded a point to ${username}. New score: ${newScore}` },
+        data: { reason: `Awarded a point to ${username}. New score: ${newScore.score}` },
     });
 
     const existingFlairOverwriteHandling = (settings[AppSetting.ExistingFlairHandling] as string[] | undefined ?? [ExistingFlairOverwriteHandling.OverwriteNumeric])[0] as ExistingFlairOverwriteHandling;
 
-    const shouldSetUserFlair = existingFlairOverwriteHandling !== ExistingFlairOverwriteHandling.NeverSet && (!flairScoreIsNaN || existingFlairOverwriteHandling === ExistingFlairOverwriteHandling.OverwriteAll);
+    let shouldSetUserFlair: boolean;
+    if (existingFlairOverwriteHandling === ExistingFlairOverwriteHandling.OverwriteAll) {
+        shouldSetUserFlair = true;
+    } else if (existingFlairOverwriteHandling === ExistingFlairOverwriteHandling.NeverSet) {
+        shouldSetUserFlair = false;
+    } else {
+        shouldSetUserFlair = !newScore.userHasFlair || newScore.flairIsPointsFlair || newScore.flairIsNumber;
+    }
 
     if (shouldSetUserFlair) {
-        console.log(`Setting points flair for ${username}. New score: ${newScore}`);
+        console.log(`Setting points flair for ${username}. New score: ${newScore.score}`);
 
         let cssClass = settings[AppSetting.CSSClass] as string | undefined;
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -335,14 +347,16 @@ async function setUserScore (username: string, newScore: number, flairScoreIsNaN
             cssClass = undefined;
         }
 
-        const subredditName = await getSubredditName(context);
+        const flairTextTemplate = settings[AppSetting.FlairTextTemplate] as string | undefined ?? "{{points}}";
+
+        const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
 
         await context.reddit.setUserFlair({
             subredditName,
             username,
             cssClass,
             flairTemplateId: flairTemplate,
-            text: newScore.toString(),
+            text: flairTextTemplate.replace("{{points}}", newScore.score.toString()),
         });
     } else {
         console.log(`${username}: Flair not set (option disabled or flair in wrong state)`);
@@ -364,13 +378,13 @@ export async function handleManualPointSetting (event: MenuItemOnPressEvent, con
     }
 
     const settings = await context.settings.getAll();
-    const { currentScore } = await getCurrentScore(user, context, settings);
+    const currentScore = await getCurrentScore(user, context, settings);
 
     const fields = [
         {
             name: "newScore",
             type: "number",
-            defaultValue: currentScore,
+            defaultValue: currentScore.score,
             label: `Enter a new score for ${comment.authorName}`,
             helpText: "Warning: This will overwrite the score that currently exists",
             multiSelect: false,
@@ -409,8 +423,14 @@ export async function manualSetPointsFormHandler (event: FormOnSubmitEvent<JSONO
 
     const settings = await context.settings.getAll();
 
-    const { flairScoreIsNaN } = await getCurrentScore(user, context, settings);
-    await setUserScore(comment.authorName, newScore, flairScoreIsNaN, context, settings);
+    const existingScore = await getCurrentScore(user, context, settings);
+    const newScoreSetting: ScoreResult = {
+        score: newScore,
+        userHasFlair: existingScore.userHasFlair,
+        flairIsPointsFlair: existingScore.flairIsPointsFlair,
+        flairIsNumber: existingScore.flairIsNumber,
+    };
+    await setUserScore(comment.authorName, newScoreSetting, context, settings);
 
     context.ui.showToast(`Score for ${comment.authorName} is now ${newScore}`);
 }

@@ -1,5 +1,4 @@
 import { JobContext, JSONObject, ScheduledJobEvent, WikiPage, WikiPagePermissionLevel } from "@devvit/public-api";
-import { getSubredditName } from "./utility.js";
 import { LeaderboardMode, AppSetting } from "./settings.js";
 import { POINTS_STORE_KEY } from "./thanksPoints.js";
 import markdownEscape from "markdown-escape";
@@ -22,7 +21,7 @@ export async function updateLeaderboard (event: ScheduledJobEvent<JSONObject | u
 
     const highScores = await context.redis.zRange(POINTS_STORE_KEY, 0, leaderboardSize - 1, { by: "rank", reverse: true });
 
-    const subredditName = await getSubredditName(context);
+    const subredditName = context.subredditName ?? await context.reddit.getCurrentSubredditName();
 
     let wikiContents = `# ReputatorBot High Scores for ${subredditName}\n\nUser | Points Total\n-|-\n`;
     wikiContents += highScores.map(score => `${markdownEscape(score.member)}|${score.score}`).join("\n");
