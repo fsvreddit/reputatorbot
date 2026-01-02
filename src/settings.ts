@@ -76,7 +76,7 @@ function isFlairTemplateValid (event: SettingsFormFieldValidatorEvent<string>) {
 }
 
 function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>) {
-    if (!event.value || event.value.length !== 1) {
+    if (event.value?.length !== 1) {
         return "You must choose an option";
     }
 }

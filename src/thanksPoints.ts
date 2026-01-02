@@ -1,12 +1,12 @@
 import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, SettingsValues, TriggerContext, User } from "@devvit/public-api";
 import { CommentSubmit, CommentUpdate } from "@devvit/protos";
-import { isModerator, replaceAll } from "./utility.js";
 import { addWeeks } from "date-fns";
 import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
 import markdownEscape from "markdown-escape";
 import { setCleanupForUsers } from "./cleanupTasks.js";
 import { isLinkId } from "@devvit/public-api/types/tid.js";
 import { manualSetPointsForm } from "./main.js";
+import { isModerator } from "devvit-helpers";
 
 export const POINTS_STORE_KEY = "thanksPointsStore";
 
@@ -157,7 +157,7 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         }
     }
 
-    const isMod = await isModerator(context, event.subreddit.name, event.author.name);
+    const isMod = await isModerator(context.reddit, event.subreddit.name, event.author.name);
 
     if (containsUserCommand && !containsModCommand && event.author.id !== event.post.authorId) {
         if (!settings[AppSetting.AnyoneCanAwardPoints]) {
@@ -192,8 +192,10 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
         const notifyOnError = (settings[AppSetting.NotifyOnError] as string[] | undefined ?? [ReplyOptions.NoReply])[0] as ReplyOptions;
         if (notifyOnError !== ReplyOptions.NoReply) {
             let message = settings[AppSetting.NotifyOnErrorTemplate] as string | undefined ?? TemplateDefaults.NotifyOnErrorTemplate;
-            message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
-            message = replaceAll(message, "{{permalink}}", parentComment.permalink);
+            message = message.replaceAll("u/{{authorname}}", `u/${event.author.name}`)
+                .replaceAll("{{authorname}}", markdownEscape(event.author.name))
+                .replaceAll("{{permalink}}", parentComment.permalink);
+
             await replyToUser(context, notifyOnError, event.author.name, message, event.comment.id);
         }
         return;
@@ -239,10 +241,11 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     if (autoSuperuserThreshold && modCommand && newScore.score === autoSuperuserThreshold && notifyOnAutoSuperuser !== ReplyOptions.NoReply) {
         console.log(`${event.comment.id}: ${parentCommentUser.username} has reached the auto superuser threshold. Notifying.`);
         let message = settings[AppSetting.NotifyOnAutoSuperuserTemplate] as string | undefined ?? TemplateDefaults.NotifyOnSuperuserTemplate;
-        message = replaceAll(message, "{{authorname}}", parentCommentUser.username);
-        message = replaceAll(message, "{{permalink}}", parentComment.permalink);
-        message = replaceAll(message, "{{threshold}}", autoSuperuserThreshold.toString());
-        message = replaceAll(message, "{{pointscommand}}", modCommand);
+        message = message.replaceAll("u/{{authorname}}", `u/${parentCommentUser.username}`)
+            .replaceAll("{{authorname}}", markdownEscape(parentCommentUser.username))
+            .replaceAll("{{permalink}}", parentComment.permalink)
+            .replaceAll("{{threshold}}", autoSuperuserThreshold.toString())
+            .replaceAll("{{pointscommand}}", modCommand);
 
         await replyToUser(context, notifyOnAutoSuperuser, parentCommentUser.username, message, parentComment.id);
     }
@@ -285,20 +288,26 @@ export async function handleThanksEvent (event: CommentSubmit | CommentUpdate, c
     const notifyOnSuccess = (settings[AppSetting.NotifyOnSuccess] as string[] | [ReplyOptions.NoReply])[0] as ReplyOptions;
     if (notifyOnSuccess !== ReplyOptions.NoReply) {
         let message = settings[AppSetting.NotifyOnSuccessTemplate] as string | undefined ?? TemplateDefaults.NotifyOnSuccessTemplate;
-        message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
-        message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
-        message = replaceAll(message, "{{permalink}}", parentComment.permalink);
-        message = replaceAll(message, "{{score}}", newScore.score.toString());
+        message = message.replaceAll("u/{{authorname}}", `u/${event.author.name}`)
+            .replaceAll("{{authorname}}", markdownEscape(event.author.name))
+            .replaceAll("u/{{awardeeusername}}", `u/${parentComment.authorName}`)
+            .replaceAll("{{awardeeusername}}", markdownEscape(parentComment.authorName))
+            .replaceAll("{{permalink}}", parentComment.permalink)
+            .replaceAll("{{score}}", newScore.score.toString());
+
         await replyToUser(context, notifyOnSuccess, event.author.name, message, event.comment.id);
     }
 
     const notifyAwardedUser = (settings[AppSetting.NotifyAwardedUser] as string[] | [ReplyOptions.NoReply])[0] as ReplyOptions;
     if (notifyAwardedUser !== ReplyOptions.NoReply) {
         let message = settings[AppSetting.NotifyAwardedUserTemplate] as string | undefined ?? TemplateDefaults.NotifyAwardedUserTemplate;
-        message = replaceAll(message, "{{authorname}}", markdownEscape(event.author.name));
-        message = replaceAll(message, "{{awardeeusername}}", markdownEscape(parentComment.authorName));
-        message = replaceAll(message, "{{permalink}}", parentComment.permalink);
-        message = replaceAll(message, "{{score}}", newScore.score.toString());
+        message = message.replaceAll("u/{{authorname}}", `u/${event.author.name}`)
+            .replaceAll("{{authorname}}", markdownEscape(event.author.name))
+            .replaceAll("u/{{awardeeusername}}", `u/${parentComment.authorName}`)
+            .replaceAll("{{awardeeusername}}", markdownEscape(parentComment.authorName))
+            .replaceAll("{{permalink}}", parentComment.permalink)
+            .replaceAll("{{score}}", newScore.score.toString());
+
         await replyToUser(context, notifyAwardedUser, event.author.name, message, parentComment.id);
     }
 }
