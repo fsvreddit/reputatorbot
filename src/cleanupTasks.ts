@@ -1,8 +1,7 @@
-import { TriggerContext, User, ZMember } from "@devvit/public-api";
-import { addDays, addMinutes, subMinutes } from "date-fns";
+import { JSONObject, ScheduledJobEvent, TriggerContext, User, ZMember } from "@devvit/public-api";
+import { addDays, addMinutes, addSeconds } from "date-fns";
 import { POINTS_STORE_KEY } from "./thanksPoints.js";
-import { CronExpressionParser } from "cron-parser";
-import { ADHOC_CLEANUP_JOB, CLEANUP_JOB_CRON } from "./constants.js";
+import { SchedulerJob } from "./constants.js";
 
 const CLEANUP_LOG_KEY = "cleanupStore";
 const DAYS_BETWEEN_CHECKS = 28;
@@ -35,47 +34,52 @@ async function userActive (username: string, context: TriggerContext): Promise<b
     }
 }
 
-interface UserActive {
-    username: string;
-    isActive: boolean;
-}
+export async function cleanupDeletedAccounts (event: ScheduledJobEvent<JSONObject | undefined>, context: TriggerContext) {
+    const recentlyRunKey = "cleanupRecentlyRun";
 
-export async function cleanupDeletedAccounts (_: unknown, context: TriggerContext) {
     const items = await context.redis.zRange(CLEANUP_LOG_KEY, 0, new Date().getTime(), { by: "score" });
     if (items.length === 0) {
         // No user accounts need to be checked.
         await scheduleAdhocCleanup(context);
+        await context.redis.del(recentlyRunKey);
         return;
     }
 
+    if (event.data?.fromCron && await context.redis.exists(recentlyRunKey)) {
+        // Recently run from cron, skip this run to avoid overlapping runs.
+        return;
+    }
+
+    await context.redis.set(recentlyRunKey, "", { expiration: addMinutes(new Date(), 1) });
+
+    const runLimit = addSeconds(new Date(), 15);
+
     // Check platform is up.
     await context.reddit.getAppUser();
+    let activeUsers = 0;
+    let deletedUsers = 0;
 
-    const itemsToCheck = 50;
+    while (items.length > 0 && new Date() < runLimit) {
+        const firstItem = items.shift();
+        if (!firstItem) {
+            break;
+        }
 
-    // Get the first N accounts that are due a check.
-    const usersToCheck = items.slice(0, itemsToCheck).map(item => item.member);
-    const userStatuses: UserActive[] = [];
-
-    for (const username of usersToCheck) {
+        const username = firstItem.member;
         const isActive = await userActive(username, context);
-        userStatuses.push(({ username, isActive } as UserActive));
+        if (isActive) {
+            // User is active, set next check date.
+            await setCleanupForUsers([username], context);
+            activeUsers++;
+        } else {
+            // User is deleted, remove from both logs.
+            await context.redis.zRem(POINTS_STORE_KEY, [username]);
+            await context.redis.zRem(CLEANUP_LOG_KEY, [username]);
+            deletedUsers++;
+        }
     }
 
-    const activeUsers = userStatuses.filter(user => user.isActive).map(user => user.username);
-    const deletedUsers = userStatuses.filter(user => !user.isActive).map(user => user.username);
-
-    // For active users, set their next check date to be one day from now.
-    if (activeUsers.length > 0) {
-        await setCleanupForUsers(activeUsers, context);
-        await context.redis.zAdd(CLEANUP_LOG_KEY, ...activeUsers.map(user => ({ member: user, score: addDays(new Date(), DAYS_BETWEEN_CHECKS).getTime() } as ZMember)));
-    }
-
-    // For deleted users, remove them from both the cleanup log and the points score.
-    if (deletedUsers.length > 0) {
-        await context.redis.zRem(POINTS_STORE_KEY, deletedUsers);
-        await context.redis.zRem(CLEANUP_LOG_KEY, deletedUsers);
-
+    if (deletedUsers > 0) {
         // Force an immediate leaderboard update, because some accounts newly cleaned up might have been visible there.
         await context.scheduler.runJob({
             name: "updateLeaderboard",
@@ -84,9 +88,9 @@ export async function cleanupDeletedAccounts (_: unknown, context: TriggerContex
         });
     }
 
-    console.log(`Cleanup: ${deletedUsers.length}/${userStatuses.length} deleted or suspended.`);
+    console.log(`Cleanup: ${deletedUsers}/${activeUsers + deletedUsers} deleted or suspended.`);
 
-    if (items.length > itemsToCheck) {
+    if (items.length > 0) {
         // In a backlog, so force another run.
         await context.scheduler.runJob({
             name: "cleanupDeletedAccounts",
@@ -129,8 +133,6 @@ export async function populateCleanupLogAndScheduleCleanup (context: TriggerCont
     }
 
     // Cancel any ad-hoc jobs and reschedule.
-    const existingJobs = await context.scheduler.listJobs();
-    await Promise.all(existingJobs.filter(job => job.name === ADHOC_CLEANUP_JOB).map(job => context.scheduler.cancelJob(job.id)));
     await scheduleAdhocCleanup(context);
 }
 
@@ -141,19 +143,22 @@ export async function scheduleAdhocCleanup (context: TriggerContext) {
         return;
     }
 
-    const nextCleanupTime = new Date(nextEntries[0].score);
-    const nextCleanupJobTime = addMinutes(nextCleanupTime, 5);
-    const nextScheduledTime = CronExpressionParser.parse(CLEANUP_JOB_CRON).next().toDate();
+    const nextCleanupJobTime = addMinutes(nextEntries[0].score, 1);
 
-    if (nextCleanupJobTime < subMinutes(nextScheduledTime, 5)) {
-        // It's worth running an ad-hoc job.
-        console.log(`Cleanup: Next ad-hoc cleanup: ${nextCleanupJobTime.toUTCString()}`);
-        await context.scheduler.runJob({
-            name: ADHOC_CLEANUP_JOB,
-            runAt: nextCleanupJobTime < new Date() ? new Date() : nextCleanupJobTime,
-        });
-    } else {
-        console.log(`Cleanup: Next entry in cleanup log is after next scheduled run (${nextCleanupTime.toUTCString()}).`);
-        console.log(`Cleanup: Next cleanup job: ${nextScheduledTime.toUTCString()}`);
+    const existingJobs = await context.scheduler.listJobs();
+    const cancellableJobs = existingJobs.filter(job => job.name === SchedulerJob.CleanupDeletedAccounts as string && "runAt" in job);
+    await Promise.all(cancellableJobs.map(job => context.scheduler.cancelJob(job.id)));
+
+    if (nextCleanupJobTime > addDays(new Date(), 1)) {
+        // Next cleanup is more than a day away, no need to schedule an ad-hoc job.
+        console.log(`Cleanup: Next ad-hoc cleanup: ${nextCleanupJobTime.toUTCString()}, not scheduling.`);
+        return;
     }
+
+    await context.scheduler.runJob({
+        name: SchedulerJob.CleanupDeletedAccounts,
+        runAt: nextCleanupJobTime < new Date() ? new Date() : nextCleanupJobTime,
+    });
+
+    console.log(`Cleanup: Next ad-hoc cleanup: ${nextCleanupJobTime.toUTCString()}`);
 }

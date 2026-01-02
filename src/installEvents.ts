@@ -1,7 +1,7 @@
 import { TriggerContext } from "@devvit/public-api";
 import { AppInstall, AppUpgrade } from "@devvit/protos";
 import { populateCleanupLogAndScheduleCleanup } from "./cleanupTasks.js";
-import { CLEANUP_JOB, CLEANUP_JOB_CRON } from "./constants.js";
+import { SchedulerJob } from "./constants.js";
 
 export async function onAppFirstInstall (_: AppInstall, context: TriggerContext) {
     await context.redis.set("InstallDate", new Date().getTime().toString());
@@ -11,9 +11,13 @@ export async function onAppInstallOrUpgrade (_: AppInstall | AppUpgrade, context
     const currentJobs = await context.scheduler.listJobs();
     await Promise.all(currentJobs.map(job => context.scheduler.cancelJob(job.id)));
 
+    const randomMinute = Math.floor(Math.random() * 60);
+    const randomHour = Math.floor(Math.random() * 24);
+
     await context.scheduler.runJob({
-        name: CLEANUP_JOB,
-        cron: CLEANUP_JOB_CRON,
+        name: SchedulerJob.CleanupDeletedAccounts,
+        cron: `${randomMinute} ${randomHour} * * *`,
+        data: { fromCron: true },
     });
 
     await populateCleanupLogAndScheduleCleanup(context);

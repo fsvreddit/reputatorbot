@@ -6,7 +6,7 @@ import { restoreFormKey } from "./main.js";
 import { populateCleanupLogAndScheduleCleanup, scheduleAdhocCleanup } from "./cleanupTasks.js";
 import pluralize from "pluralize";
 import { AppSetting } from "./settings.js";
-import { ADHOC_CLEANUP_JOB } from "./constants.js";
+import { SchedulerJob } from "./constants.js";
 
 export interface CompactScore {
     u: string;
@@ -170,7 +170,7 @@ export async function restoreFormHandler (event: FormOnSubmitEvent<JSONObject>, 
 
     // Cancel any ad-hoc jobs and reschedule.
     const existingJobs = await context.scheduler.listJobs();
-    await Promise.all(existingJobs.filter(job => job.name === ADHOC_CLEANUP_JOB).map(job => context.scheduler.cancelJob(job.id)));
+    await Promise.all(existingJobs.filter(job => job.name === SchedulerJob.CleanupDeletedAccounts as string).map(job => context.scheduler.cancelJob(job.id)));
     await scheduleAdhocCleanup(context);
 }
 

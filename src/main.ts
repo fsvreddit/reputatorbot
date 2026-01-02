@@ -6,7 +6,7 @@ import { updateLeaderboard } from "./leaderboard.js";
 import { cleanupDeletedAccounts } from "./cleanupTasks.js";
 import { backupAllScores, restoreForm, restoreFormHandler, showRestoreForm } from "./backupAndRestore.js";
 import { leaderboardCustomPost, createCustomPostMenuHandler, customPostForm, createCustomPostFormHandler } from "./customPost/index.js";
-import { ADHOC_CLEANUP_JOB, CLEANUP_JOB, UPDATE_LEADERBOARD_JOB, VALIDATE_REGEX_JOB } from "./constants.js";
+import { SchedulerJob } from "./constants.js";
 
 Devvit.addSettings(appSettings);
 
@@ -26,22 +26,17 @@ Devvit.addTrigger({
 });
 
 Devvit.addSchedulerJob({
-    name: UPDATE_LEADERBOARD_JOB,
+    name: SchedulerJob.UpdateLeaderboard,
     onRun: updateLeaderboard,
 });
 
 Devvit.addSchedulerJob({
-    name: CLEANUP_JOB,
+    name: SchedulerJob.CleanupDeletedAccounts,
     onRun: cleanupDeletedAccounts,
 });
 
 Devvit.addSchedulerJob({
-    name: ADHOC_CLEANUP_JOB,
-    onRun: cleanupDeletedAccounts,
-});
-
-Devvit.addSchedulerJob({
-    name: VALIDATE_REGEX_JOB,
+    name: SchedulerJob.ValidateRegex,
     onRun: validateRegexJobHandler,
 });
 

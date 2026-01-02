@@ -1,5 +1,5 @@
 import { JSONObject, ScheduledJobEvent, SettingsFormField, SettingsFormFieldValidatorEvent, TriggerContext } from "@devvit/public-api";
-import { VALIDATE_REGEX_JOB } from "./constants.js";
+import { SchedulerJob } from "./constants.js";
 import pluralize from "pluralize";
 
 export enum AppSetting {
@@ -372,7 +372,7 @@ async function validateRegexes (event: SettingsFormFieldValidatorEvent<boolean>,
     }
 
     await context.scheduler.runJob({
-        name: VALIDATE_REGEX_JOB,
+        name: SchedulerJob.ValidateRegex,
         runAt: new Date(),
         data: { username: user.username },
     });
