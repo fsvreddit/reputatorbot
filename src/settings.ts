@@ -254,7 +254,7 @@ export const appSettings: SettingsFormField[] = [
             {
                 name: AppSetting.NotifyAwardedUserTemplate,
                 type: "paragraph",
-                label: "Template of message sent when a user successfully awards a point",
+                label: "Template of message sent to a user who is awarded a point",
                 helpText: "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
                 defaultValue: TemplateDefaults.NotifyAwardedUserTemplate,
             },
