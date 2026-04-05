@@ -33,18 +33,15 @@ If the application is removed from a subreddit, all data is deleted although the
 
 Data for users who are deleted is removed from the app within 28 days of account deletion.
 
-## Acknowledgements
-
-[Podium icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/podium)
-
 ## About
 
 This app is open source and licenced under the BSD 3-Clause Licence. [You can find the source code on GitHub here](https://github.com/fsvreddit/reputatorbot).
 
 ## Version History
 
-### v1.6.2
+### v2.0
 
+* Rewrite for Devvit Web, improving leaderboard post format
 * Usernames are no longer incorrectly escaped when preceded by u/
 * Clarified misleading configuration option
 
