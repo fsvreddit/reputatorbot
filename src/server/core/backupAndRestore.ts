@@ -29,9 +29,6 @@ export function decompressScores (blob: string): CompactScore[] {
 const BACKUP_WIKI_PAGE = "reputatorbot/backup";
 
 export async function backupAllScores (): Promise<UiResponse> {
-    const allSettings = await settings.getAll();
-    console.log(JSON.stringify(allSettings, null, 2));
-
     const backupEnabled = await settings.get<boolean>(AppSetting.EnableBackup);
     if (!backupEnabled) {
         return {

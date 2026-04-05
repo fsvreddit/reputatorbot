@@ -5,7 +5,6 @@ export const handleSelectFieldHasOptionChosen = (request: Request, response: Res
     const validationRequest = request.body as SettingsValidationRequest<string[]>;
 
     if (validationRequest.value?.length !== 1) {
-        console.log("Validation failed: ", validationRequest.value);
         return response.json({
             success: false,
             error: "You must select an option.",

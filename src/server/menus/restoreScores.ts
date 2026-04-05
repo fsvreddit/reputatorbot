@@ -19,5 +19,6 @@ export const handleRestoreScoresMenu = async (_request: Request, response: Respo
         return response.json(json);
     }
 
-    return await showRestoreForm();
+    const uiResponse = await showRestoreForm();
+    return response.json(uiResponse);
 };
