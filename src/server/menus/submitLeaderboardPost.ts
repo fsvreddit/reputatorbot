@@ -1,11 +1,11 @@
 import { UiResponse } from "@devvit/web/shared";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { performModCheck } from "./modCheck";
 
-export const handleSubmitLeaderboardPostMenu = async (_request: Request, response: Response) => {
+export const handleSubmitLeaderboardPostMenu = async (c: Context) => {
     const modCheckResult = await performModCheck();
     if (modCheckResult) {
-        return response.json(modCheckResult);
+        return c.json(modCheckResult);
     }
 
     const uiResponse: UiResponse = {
@@ -37,5 +37,5 @@ export const handleSubmitLeaderboardPostMenu = async (_request: Request, respons
         },
     };
 
-    return response.json(uiResponse);
+    return c.json(uiResponse);
 };

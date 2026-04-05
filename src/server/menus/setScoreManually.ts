@@ -1,16 +1,16 @@
 import { reddit, settings, User } from "@devvit/web/server";
 import { MenuItemRequest, UiResponse, T1 } from "@devvit/web/shared";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { getCurrentScore } from "../core/thanksPoints";
 import { performModCheck } from "./modCheck";
 
-export const handleSetScoreManuallyMenu = async (request: Request, response: Response) => {
+export const handleSetScoreManuallyMenu = async (c: Context) => {
     const modCheckResult = await performModCheck();
     if (modCheckResult) {
-        return response.json(modCheckResult);
+        return c.json(modCheckResult);
     }
 
-    const menuRequest = request.body as MenuItemRequest;
+    const menuRequest = await c.req.json<MenuItemRequest>();
 
     const comment = await reddit.getCommentById(menuRequest.targetId as T1);
     let user: User | undefined;
@@ -25,7 +25,7 @@ export const handleSetScoreManuallyMenu = async (request: Request, response: Res
             showToast: "Cannot set points. User may be shadowbanned.",
         };
 
-        return response.json(json);
+        return c.json(json);
     }
 
     const appSettings = await settings.getAll();
@@ -57,5 +57,5 @@ export const handleSetScoreManuallyMenu = async (request: Request, response: Res
         },
     };
 
-    return response.json(json);
+    return c.json(json);
 };

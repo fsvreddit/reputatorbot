@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { redis, settings } from "@devvit/web/server";
 import { AppSetting, POINTS_STORE_KEY } from "../core";
 import type { LeaderboardEntry, LeaderboardResponse } from "../../shared/index.js";
 
-export const getLeaderboard = async (_request: Request, response: Response) => {
+export const getLeaderboard = async (c: Context) => {
     try {
         const appSettings = await settings.getAll();
         const leaderboardSize = (appSettings[AppSetting.LeaderboardSize] as number | undefined) ?? 20;
@@ -24,9 +24,9 @@ export const getLeaderboard = async (_request: Request, response: Response) => {
             size: leaderboardSize,
         };
 
-        return response.status(200).json(leaderboardResponse);
+        return c.json(leaderboardResponse, 200);
     } catch (error) {
         console.error(`Error fetching leaderboard: ${error}`);
-        return response.status(500).json({ error: "Failed to fetch leaderboard" });
+        return c.json({ error: "Failed to fetch leaderboard" }, 500);
     }
 };

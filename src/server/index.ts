@@ -1,53 +1,47 @@
-import express from "express";
 import { createServer, getServerPort } from "@devvit/web/server";
+import { Hono } from "hono";
 import { handleCleanupJob, updateLeaderboardJob } from "./tasks";
 import { onAppInstall, onCommentSubmit, onCommentUpdate } from "./triggers";
 import { handleBackupScoresMenu, handleRestoreScoresMenu, handleSetScoreManuallyMenu, handleSubmitLeaderboardPostMenu } from "./menus";
 import { handleFlairTemplateValidator, handleFlairTextTemplateIncludesPlaceholderValidator, handleLeaderboardSizeValidator, handleMustSelectCommandValidator, handleSelectFieldHasOptionChosen, handleWikiPageNameValidator } from "./settingsValidators";
 import { handleRestoreScoresForm, handleSetScoreManuallyForm, handleSubmitLeaderboardPostForm } from "./forms";
 import { getLeaderboard } from "./api/getLeaderboard";
+import { getRequestListener } from "@hono/node-server";
 
-const application = express();
-application.use(express.json());
-application.use(express.urlencoded({ extended: true }));
-application.use(express.text());
-
-const router = express.Router();
+const application = new Hono();
 
 // Triggers
-router.post("/internal/triggers/app-install", onAppInstall);
-router.post("/internal/triggers/comment-submit", onCommentSubmit);
-router.post("/internal/triggers/comment-update", onCommentUpdate);
+application.post("/internal/triggers/app-install", onAppInstall);
+application.post("/internal/triggers/comment-submit", onCommentSubmit);
+application.post("/internal/triggers/comment-update", onCommentUpdate);
 
 // Scheduled Jobs
-router.post("/internal/tasks/cleanup-job", handleCleanupJob);
-router.post("/internal/tasks/update-leaderboard-job", updateLeaderboardJob);
+application.post("/internal/tasks/cleanup-job", handleCleanupJob);
+application.post("/internal/tasks/update-leaderboard-job", updateLeaderboardJob);
 
 // Settings validators
-router.post("/internal/validators/must-select-command", handleMustSelectCommandValidator);
-router.post("/internal/validators/flair-text-template-includes-placeholder", handleFlairTextTemplateIncludesPlaceholderValidator);
-router.post("/internal/validators/flair-template-valid", handleFlairTemplateValidator);
-router.post("/internal/validators/leaderboard-size-valid", handleLeaderboardSizeValidator);
-router.post("/internal/validators/wiki-page-name-valid", handleWikiPageNameValidator);
-router.post("/internal/validators/select-field-has-option-chosen", handleSelectFieldHasOptionChosen);
+application.post("/internal/validators/must-select-command", handleMustSelectCommandValidator);
+application.post("/internal/validators/flair-text-template-includes-placeholder", handleFlairTextTemplateIncludesPlaceholderValidator);
+application.post("/internal/validators/flair-template-valid", handleFlairTemplateValidator);
+application.post("/internal/validators/leaderboard-size-valid", handleLeaderboardSizeValidator);
+application.post("/internal/validators/wiki-page-name-valid", handleWikiPageNameValidator);
+application.post("/internal/validators/select-field-has-option-chosen", handleSelectFieldHasOptionChosen);
 
 // Menus
-router.post("/internal/menu/set-score-manually", handleSetScoreManuallyMenu);
-router.post("/internal/menu/backup-scores", handleBackupScoresMenu);
-router.post("/internal/menu/restore-scores", handleRestoreScoresMenu);
-router.post("/internal/menu/submit-leaderboard-post", handleSubmitLeaderboardPostMenu);
+application.post("/internal/menu/set-score-manually", handleSetScoreManuallyMenu);
+application.post("/internal/menu/backup-scores", handleBackupScoresMenu);
+application.post("/internal/menu/restore-scores", handleRestoreScoresMenu);
+application.post("/internal/menu/submit-leaderboard-post", handleSubmitLeaderboardPostMenu);
 
 // Form handlers
-router.post("/internal/form/set-score-manually", handleSetScoreManuallyForm);
-router.post("/internal/form/restore-scores", handleRestoreScoresForm);
-router.post("/internal/form/submit-leaderboard-post", handleSubmitLeaderboardPostForm);
+application.post("/internal/form/set-score-manually", handleSetScoreManuallyForm);
+application.post("/internal/form/restore-scores", handleRestoreScoresForm);
+application.post("/internal/form/submit-leaderboard-post", handleSubmitLeaderboardPostForm);
 
 // API endpoints
-router.get("/api/leaderboard", getLeaderboard);
+application.get("/api/leaderboard", getLeaderboard);
 
-application.use(router);
-
-const server = createServer(application);
+const server = createServer(getRequestListener(application.fetch));
 server.on("error", (err) => {
     console.error(`server error; ${err.stack}`);
 });

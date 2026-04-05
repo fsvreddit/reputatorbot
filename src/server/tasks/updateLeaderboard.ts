@@ -1,16 +1,16 @@
 import { context, redis, reddit, ScheduledCronJob, settings, WikiPage } from "@devvit/web/server";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { AppSetting, LeaderboardMode, POINTS_STORE_KEY } from "../core";
 import markdownEscape from "markdown-escape";
 import pluralize from "pluralize";
 
-export const updateLeaderboardJob = async (request: Request, response: Response) => {
-    console.log("sendReminderJob:", request.body);
+export const updateLeaderboardJob = async (c: Context) => {
+    const jobRequest = await c.req.json<ScheduledCronJob>();
+    console.log("sendReminderJob:", jobRequest);
 
-    const jobRequest = request.body as ScheduledCronJob;
     await updateLeaderboard(jobRequest);
 
-    return response.status(200).send({ message: "cleanup job completed" });
+    return c.json({ message: "cleanup job completed" }, 200);
 };
 
 export async function updateLeaderboard (jobRequest: ScheduledCronJob) {

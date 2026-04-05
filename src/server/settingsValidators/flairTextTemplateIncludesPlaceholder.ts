@@ -1,17 +1,17 @@
 import { SettingsValidationRequest, SettingsValidationResponse } from "@devvit/web/shared";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 
-export const handleFlairTextTemplateIncludesPlaceholderValidator = (request: Request, response: Response) => {
-    const validationRequest = request.body as SettingsValidationRequest<string>;
+export const handleFlairTextTemplateIncludesPlaceholderValidator = async (c: Context) => {
+    const validationRequest = await c.req.json<SettingsValidationRequest<string>>();
 
     const regex = /{{points}}/g;
     const matches = validationRequest.value?.match(regex);
     if (!matches || matches.length > 1) {
-        return response.json({
+        return c.json({
             success: false,
             error: "You must provide a flair text template that includes exactly one placeholder {{points}}",
         } as SettingsValidationResponse);
     }
 
-    return response.status(200).json({ success: true, message: "Validation successful." } as SettingsValidationResponse);
+    return c.json({ success: true, message: "Validation successful." } as SettingsValidationResponse, 200);
 };

@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { showRestoreForm } from "../core";
 import { performModCheck } from "./modCheck";
 
-export const handleRestoreScoresMenu = async (_request: Request, response: Response) => {
+export const handleRestoreScoresMenu = async (c: Context) => {
     const modCheckResult = await performModCheck();
     if (modCheckResult) {
-        return response.json(modCheckResult);
+        return c.json(modCheckResult);
     }
 
     const uiResponse = await showRestoreForm();
-    return response.json(uiResponse);
+    return c.json(uiResponse);
 };

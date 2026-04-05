@@ -1,8 +1,8 @@
 import { redis } from "@devvit/web/server";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 
-export const onAppInstall = async (_: Request, response: Response) => {
+export const onAppInstall = async (c: Context) => {
     await redis.set("InstallDate", new Date().getTime().toString());
 
-    return response.status(200).json({ message: "app installed" });
+    return c.json({ message: "app installed" }, 200);
 };

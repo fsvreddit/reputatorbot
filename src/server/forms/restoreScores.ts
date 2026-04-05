@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { restoreFormHandler, RestoreScoresFormValues } from "../core";
 
-export const handleRestoreScoresForm = async (request: Request, response: Response) => {
-    const restoreScoresFormValues = request.body as RestoreScoresFormValues;
+export const handleRestoreScoresForm = async (c: Context) => {
+    const restoreScoresFormValues = await c.req.json<RestoreScoresFormValues>();
     const uiResponse = await restoreFormHandler(restoreScoresFormValues);
-    response.json(uiResponse);
+    return c.json(uiResponse);
 };

@@ -1,5 +1,5 @@
 import { context, reddit, redis, ScheduledCronJob, scheduler, User } from "@devvit/web/server";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { addDays, addMinutes, addSeconds } from "date-fns";
 import { POINTS_STORE_KEY } from "../core";
 
@@ -7,14 +7,13 @@ const CLEANUP_LOG_KEY = "cleanupStore";
 const CLEANUP_JOB_NAME = "cleanupJob";
 const DAYS_BETWEEN_CHECKS = 28;
 
-export const handleCleanupJob = async (request: Request, response: Response) => {
-    console.log("sendReminderJob:", request.body);
-
-    const jobRequest = request.body as ScheduledCronJob;
+export const handleCleanupJob = async (c: Context) => {
+    const jobRequest = await c.req.json<ScheduledCronJob>();
+    console.log("sendReminderJob:", jobRequest);
 
     await cleanupDeletedAccounts(jobRequest);
 
-    return response.status(200).send({ message: "cleanup job completed" });
+    return c.json({ message: "cleanup job completed" }, 200);
 };
 
 export async function setCleanupForUsers (usernames: string[]) {

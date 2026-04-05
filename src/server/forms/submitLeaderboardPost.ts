@@ -1,6 +1,6 @@
 import { context, reddit, redis } from "@devvit/web/server";
 import { T3, UiResponse } from "@devvit/web/shared";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 
 interface SubmitLeaderboardPostFormValues {
     postTitle: string;
@@ -12,8 +12,8 @@ export interface CustomPostData {
     postId: T3;
 }
 
-export const handleSubmitLeaderboardPostForm = async (request: Request, response: Response) => {
-    const { postTitle, stickyPost, removeExisting } = request.body as SubmitLeaderboardPostFormValues;
+export const handleSubmitLeaderboardPostForm = async (c: Context) => {
+    const { postTitle, stickyPost, removeExisting } = await c.req.json<SubmitLeaderboardPostFormValues>();
 
     const customPostDataKey = "customPostData";
 
@@ -56,5 +56,5 @@ export const handleSubmitLeaderboardPostForm = async (request: Request, response
         showToast: "Leaderboard post submitted successfully!",
     };
 
-    return response.json(uiResponse);
+    return c.json(uiResponse);
 };

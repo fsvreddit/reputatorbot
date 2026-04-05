@@ -1,6 +1,6 @@
 import { reddit, settings, User } from "@devvit/web/server";
 import { T1, UiResponse } from "@devvit/web/shared";
-import { Request, Response } from "express";
+import type { Context } from "hono";
 import { getCurrentScore, ScoreResult, setUserScore } from "../core/thanksPoints";
 
 interface SetScoreManuallyFormValues {
@@ -8,8 +8,8 @@ interface SetScoreManuallyFormValues {
     commentId: T1;
 }
 
-export const handleSetScoreManuallyForm = async (request: Request, response: Response) => {
-    const { newScore, commentId } = request.body as SetScoreManuallyFormValues;
+export const handleSetScoreManuallyForm = async (c: Context) => {
+    const { newScore, commentId } = await c.req.json<SetScoreManuallyFormValues>();
 
     const comment = await reddit.getCommentById(commentId);
 
@@ -24,7 +24,7 @@ export const handleSetScoreManuallyForm = async (request: Request, response: Res
         const json: UiResponse = {
             showToast: "Cannot set points. User may be shadowbanned.",
         };
-        return response.json(json);
+        return c.json(json);
     }
 
     const appSettings = await settings.getAll();
@@ -42,5 +42,5 @@ export const handleSetScoreManuallyForm = async (request: Request, response: Res
         showToast: `New score for ${comment.authorName} is ${newScore}`,
     };
 
-    return response.status(200).json(json);
+    return c.json(json, 200);
 };
