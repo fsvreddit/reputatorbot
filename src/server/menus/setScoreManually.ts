@@ -48,7 +48,7 @@ export const handleSetScoreManuallyMenu = async (c: Context) => {
                     {
                         name: "commentId",
                         type: "string",
-                        label: "Comment ID",
+                        label: "Comment ID (for internal use)",
                         disabled: true,
                         defaultValue: menuRequest.targetId,
                     },
