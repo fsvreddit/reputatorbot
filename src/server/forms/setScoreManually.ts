@@ -1,4 +1,4 @@
-import { context, reddit, settings, User } from "@devvit/web/server";
+import { reddit, settings, User } from "@devvit/web/server";
 import { T1, UiResponse } from "@devvit/web/shared";
 import { Request, Response } from "express";
 import { getCurrentScore, ScoreResult, setUserScore } from "../core/thanksPoints";
@@ -42,6 +42,5 @@ export const handleSetScoreManuallyForm = async (request: Request, response: Res
         showToast: `New score for ${comment.authorName} is ${newScore}`,
     };
 
-    console.log(JSON.stringify(context, null, 2));
     return response.status(200).json(json);
 };

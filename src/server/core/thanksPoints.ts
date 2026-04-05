@@ -183,7 +183,7 @@ export async function handleThanksEvent (event: OnCommentSubmitRequest | OnComme
     const parentComment = await reddit.getCommentById(event.comment.parentId as T1);
 
     if (parentComment.authorName === context.appSlug || parentComment.authorName === "AutoModerator") {
-        // Cannot award points to Automod or the app account
+        console.log(`${event.comment.id}: points attempt on a comment by ${parentComment.authorName} which is not allowed.`);
         return;
     } else if (parentComment.authorName === event.author.name) {
         console.log(`${event.comment.id}: points attempt by ${event.author.name} on their own comment`);
@@ -280,8 +280,7 @@ export async function handleThanksEvent (event: OnCommentSubmitRequest | OnComme
         }
     }
 
-    const now = new Date();
-    await redis.set(redisKey, now.getTime().toString(), { expiration: addWeeks(now, 1) });
+    await redis.set(redisKey, Date.now().toString(), { expiration: addWeeks(new Date(), 1) });
 
     const [notifyOnSuccess] = appSettings[AppSetting.NotifyOnSuccess] as ReplyOptions[] | undefined ?? [ReplyOptions.NoReply];
     if (notifyOnSuccess !== ReplyOptions.NoReply) {
@@ -313,6 +312,7 @@ export async function handleThanksEvent (event: OnCommentSubmitRequest | OnComme
 export async function setUserScore (username: string, newScore: ScoreResult, appSettings: SettingsValues) {
     // Store the user's new score
     await redis.zAdd(POINTS_STORE_KEY, { member: username, score: newScore.score });
+    console.log(`Set new score for ${username}: ${newScore.score}`);
     // Queue user for cleanup checks in 24 hours, overwriting existing value.
     await setCleanupForUsers([username]);
 
