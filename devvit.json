@@ -41,6 +41,12 @@
     "menu": {
         "items": [
             {
+                "label": "Submit Leaderboard Post",
+                "forUserType": "moderator",
+                "location": "subreddit",
+                "endpoint": "/internal/menu/submit-leaderboard-post"
+            },
+            {
                 "label": "Set ReputatorBot score manually",
                 "forUserType": "moderator",
                 "location": "comment",
@@ -62,7 +68,8 @@
     },
     "forms": {
         "manualSetPointsForm": "/internal/form/set-score-manually",
-        "restoreScoresForm": "/internal/form/restore-scores"
+        "restoreScoresForm": "/internal/form/restore-scores",
+        "submitLeaderboardPostForm": "/internal/form/submit-leaderboard-post"
     },
     "settings": {
         "subreddit": {

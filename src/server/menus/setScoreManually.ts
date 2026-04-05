@@ -1,23 +1,13 @@
-import { context, reddit, settings, User } from "@devvit/web/server";
+import { reddit, settings, User } from "@devvit/web/server";
 import { MenuItemRequest, UiResponse, T1 } from "@devvit/web/shared";
 import { Request, Response } from "express";
 import { getCurrentScore } from "../core/thanksPoints";
-import { isModerator } from "../core";
+import { performModCheck } from "./modCheck";
 
 export const handleSetScoreManuallyMenu = async (request: Request, response: Response) => {
-    if (!context.username) {
-        const json: UiResponse = {
-            showToast: "You must be logged in to use this function.",
-        };
-        return response.json(json);
-    }
-
-    const isMod = await isModerator(context.username);
-    if (!isMod) {
-        const json: UiResponse = {
-            showToast: "You must be a moderator to use this function.",
-        };
-        return response.json(json);
+    const modCheckResult = await performModCheck();
+    if (modCheckResult) {
+        return response.json(modCheckResult);
     }
 
     const menuRequest = request.body as MenuItemRequest;

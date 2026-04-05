@@ -2,9 +2,9 @@ import express from "express";
 import { createServer, getServerPort } from "@devvit/web/server";
 import { handleCleanupJob, updateLeaderboardJob } from "./tasks";
 import { onAppInstall, onCommentSubmit, onCommentUpdate } from "./triggers";
-import { handleBackupScoresMenu, handleRestoreScoresMenu, handleSetScoreManuallyMenu } from "./menus";
+import { handleBackupScoresMenu, handleRestoreScoresMenu, handleSetScoreManuallyMenu, handleSubmitLeaderboardPostMenu } from "./menus";
 import { handleFlairTemplateValidator, handleFlairTextTemplateIncludesPlaceholderValidator, handleLeaderboardSizeValidator, handleMustSelectCommandValidator, handleSelectFieldHasOptionChosen, handleWikiPageNameValidator } from "./settingsValidators";
-import { handleRestoreScoresForm, handleSetScoreManuallyForm } from "./forms";
+import { handleRestoreScoresForm, handleSetScoreManuallyForm, handleSubmitLeaderboardPostForm } from "./forms";
 import { getLeaderboard } from "./api/getLeaderboard";
 
 const application = express();
@@ -35,10 +35,12 @@ router.post("/internal/validators/select-field-has-option-chosen", handleSelectF
 router.post("/internal/menu/set-score-manually", handleSetScoreManuallyMenu);
 router.post("/internal/menu/backup-scores", handleBackupScoresMenu);
 router.post("/internal/menu/restore-scores", handleRestoreScoresMenu);
+router.post("/internal/menu/submit-leaderboard-post", handleSubmitLeaderboardPostMenu);
 
 // Form handlers
 router.post("/internal/form/set-score-manually", handleSetScoreManuallyForm);
 router.post("/internal/form/restore-scores", handleRestoreScoresForm);
+router.post("/internal/form/submit-leaderboard-post", handleSubmitLeaderboardPostForm);
 
 // API endpoints
 router.get("/api/leaderboard", getLeaderboard);
