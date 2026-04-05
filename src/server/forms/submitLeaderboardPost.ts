@@ -52,9 +52,7 @@ export const handleSubmitLeaderboardPostForm = async (c: Context) => {
 
     await redis.set(customPostDataKey, JSON.stringify(customPostData));
 
-    const uiResponse: UiResponse = {
+    return c.json<UiResponse>({
         showToast: "Leaderboard post submitted successfully!",
-    };
-
-    return c.json(uiResponse);
+    });
 };

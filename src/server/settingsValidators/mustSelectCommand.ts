@@ -5,11 +5,11 @@ export const handleMustSelectCommandValidator = async (c: Context) => {
     const validationRequest = await c.req.json<SettingsValidationRequest<string>>();
 
     if (!validationRequest.value) {
-        return c.json({
+        return c.json<SettingsValidationResponse>({
             success: false,
             error: "You must enter at least one command for awarding points.",
-        } as SettingsValidationResponse);
+        });
     }
 
-    return c.json({ success: true, message: "Validation successful." } as SettingsValidationResponse, 200);
+    return c.json<SettingsValidationResponse>({ success: true }, 200);
 };

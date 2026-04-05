@@ -6,11 +6,11 @@ export const handleFlairTemplateValidator = async (c: Context) => {
 
     const flairTemplateRegex = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){4}[0-9a-f]{8}$/;
     if (validationRequest.value && !flairTemplateRegex.test(validationRequest.value)) {
-        return c.json({
+        return c.json<SettingsValidationResponse>({
             success: false,
             error: "Invalid flair template ID",
-        } as SettingsValidationResponse);
+        });
     }
 
-    return c.json({ success: true, message: "Validation successful." } as SettingsValidationResponse, 200);
+    return c.json<SettingsValidationResponse>({ success: true }, 200);
 };

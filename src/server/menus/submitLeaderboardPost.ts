@@ -8,7 +8,7 @@ export const handleSubmitLeaderboardPostMenu = async (c: Context) => {
         return c.json(modCheckResult);
     }
 
-    const uiResponse: UiResponse = {
+    return c.json<UiResponse>({
         showForm: {
             name: "submitLeaderboardPostForm",
             form: {
@@ -35,7 +35,5 @@ export const handleSubmitLeaderboardPostMenu = async (c: Context) => {
                 ],
             },
         },
-    };
-
-    return c.json(uiResponse);
+    });
 };

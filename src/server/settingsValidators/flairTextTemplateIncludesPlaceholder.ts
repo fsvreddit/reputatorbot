@@ -7,11 +7,11 @@ export const handleFlairTextTemplateIncludesPlaceholderValidator = async (c: Con
     const regex = /{{points}}/g;
     const matches = validationRequest.value?.match(regex);
     if (!matches || matches.length > 1) {
-        return c.json({
+        return c.json<SettingsValidationResponse>({
             success: false,
             error: "You must provide a flair text template that includes exactly one placeholder {{points}}",
-        } as SettingsValidationResponse);
+        });
     }
 
-    return c.json({ success: true, message: "Validation successful." } as SettingsValidationResponse, 200);
+    return c.json<SettingsValidationResponse>({ success: true }, 200);
 };

@@ -21,10 +21,9 @@ export const handleSetScoreManuallyForm = async (c: Context) => {
     }
 
     if (!user) {
-        const json: UiResponse = {
+        return c.json<UiResponse>({
             showToast: "Cannot set points. User may be shadowbanned.",
-        };
-        return c.json(json);
+        });
     }
 
     const appSettings = await settings.getAll();
@@ -38,9 +37,7 @@ export const handleSetScoreManuallyForm = async (c: Context) => {
     };
     await setUserScore(comment.authorName, newScoreSetting, appSettings);
 
-    const json: UiResponse = {
+    return c.json<UiResponse>({
         showToast: `New score for ${comment.authorName} is ${newScore}`,
-    };
-
-    return c.json(json, 200);
+    });
 };

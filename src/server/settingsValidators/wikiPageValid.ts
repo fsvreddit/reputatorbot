@@ -6,11 +6,11 @@ export const handleWikiPageNameValidator = async (c: Context) => {
 
     const wikiPageNameRegex = /^[\w/]+$/i;
     if (validationRequest.value && !wikiPageNameRegex.test(validationRequest.value)) {
-        return c.json({
+        return c.json<SettingsValidationResponse>({
             success: false,
             error: "Invalid wiki page name. Wiki page name must consist of alphanumeric characters and / characters only.",
-        } as SettingsValidationResponse);
+        });
     }
 
-    return c.json({ success: true, message: "Validation successful." } as SettingsValidationResponse, 200);
+    return c.json<SettingsValidationResponse>({ success: true }, 200);
 };
