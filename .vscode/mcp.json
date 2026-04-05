@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "devvit": {
+      "command": "npx",
+      "args": ["-y", "@devvit/mcp"]
+    }
+  }
+}

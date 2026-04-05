@@ -1,0 +1,280 @@
+{
+    "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+    "name": "reputatorbot",
+    "permissions": {
+        "reddit": true,
+        "redis": true
+    },
+    "post": {
+        "dir": "dist/client",
+        "entrypoints": {
+            "default": {
+                "entry": "leaderboard.html",
+                "height": "tall",
+                "inline": true
+            }
+        }
+    },
+    "server": {
+        "dir": "dist/server",
+        "entry": "index.cjs"
+    },
+    "triggers": {
+        "onAppInstall": "/internal/triggers/app-install",
+        "onCommentSubmit": "/internal/triggers/comment-submit",
+        "onCommentUpdate": "/internal/triggers/comment-update"
+    },
+    "scheduler": {
+        "tasks": {
+            "cleanupJob": {
+                "endpoint": "/internal/tasks/cleanup-job",
+                "cron": "5 * * * *",
+                "data": {
+                    "fromCron": true
+                }
+            },
+            "updateLeaderboard": {
+                "endpoint": "/internal/tasks/update-leaderboard-job"
+            }
+        }
+    },
+    "menu": {
+        "items": [
+            {
+                "label": "Set ReputatorBot score manually",
+                "forUserType": "moderator",
+                "location": "comment",
+                "endpoint": "/internal/menu/set-score-manually"
+            },
+            {
+                "label": "Backup ReputatorBot Scores",
+                "forUserType": "moderator",
+                "location": "subreddit",
+                "endpoint": "/internal/menu/backup-scores"
+            },
+            {
+                "label": "Restore ReputatorBot Scores",
+                "forUserType": "moderator",
+                "location": "subreddit",
+                "endpoint": "/internal/menu/restore-scores"
+            }
+        ]
+    },
+    "forms": {
+        "manualSetPointsForm": "/internal/form/set-score-manually",
+        "restoreScoresForm": "/internal/form/restore-scores"
+    },
+    "settings": {
+        "subreddit": {
+            "thanksCommand": {
+                "type": "paragraph",
+                "label": "Command or commands for users to award reputation points",
+                "helpText": "If you want to allow more than one command, place each command on a new line",
+                "defaultValue": "!thanks",
+                "validationEndpoint": "/internal/validators/must-select-command"
+            },
+            "thanksCommandUsesRegex": {
+                "type": "boolean",
+                "label": "Treat user commands as regular expressions",
+                "defaultValue": false
+            },
+            "modThanksCommand": {
+                "type": "string",
+                "label": "Alternate command for mods and trusted users to award reputation points",
+                "helpText": "Optional.",
+                "defaultValue": "!modThanks"
+            },
+            "anyoneCanAwardPoints": {
+                "type": "boolean",
+                "label": "Allow any user to award points",
+                "helpText": "If turned off, only the OP, mods and named trusted users may award points",
+                "defaultValue": false
+            },
+            "superUsers": {
+                "type": "string",
+                "label": "A list of trusted users other than mods who can award points",
+                "helpText": "Optional. Enter a comma-separated list of users who can award points in addition to mods using the mod command"
+            },
+            "autoSuperuserThreshold": {
+                "type": "number",
+                "label": "Treat users with this many points as automatically a trusted user",
+                "helpText": "If zero, only explicitly named users above will be treated as trusted users"
+            },
+            "notifyOnAutoSuperuser": {
+                "type": "select",
+                "label": "Notify users who reach the auto trusted user threshold",
+                "options": [
+                    { "label": "No Notification", "value": "none" },
+                    { "label": "Send user a private message", "value": "replybypm" },
+                    { "label": "Reply as comment", "value": "replybycomment" }
+                ],
+                "defaultValue": "none",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "notifyOnAutoSuperuserTemplate": {
+                "type": "paragraph",
+                "label": "Template of message sent when a user reaches the trusted user threshold",
+                "helpText": "Placeholder supported: {{authorname}}, {{permalink}}, {{threshold}}, {{pointscommand}}",
+                "defaultValue": "Hello {{authorname}},\n\nNow that you have reached {{threshold}} points you can now award points yourself, even if you're not the OP. Please use the command \"{{pointscommand}}\" if you'd like to do this.\n\n---\n\n^(I am a bot - please contact the mods with any questions)"
+            },
+            "excludedUsers": {
+                "type": "string",
+                "label": "Users who shouldn't have points awarded to them",
+                "helpText": "Optional. Enter a comma-separated list of users who shouldn't have points awarded to them."
+            },
+            "usersWhoCantAwardPoints": {
+                "type": "string",
+                "label": "Users who are not permitted to award points",
+                "helpText": "Optional. Enter a comma-separated list of users who are not able to award points"
+            },
+            "postFlairTextToIgnore": {
+                "type": "string",
+                "label": "Optional. A list of post flairs (comma separated) for posts where points cannot be awarded"
+            },
+            "existingFlairHandling": {
+                "type": "select",
+                "label": "Flair setting option",
+                "options": [
+                    { "label": "Set flair to new score, if flair unset or flair is numeric", "value": "overwritenumeric" },
+                    { "label": "Set flair to new score, if user has no flair", "value": "overwriteall" },
+                    { "label": "Never set flair", "value": "neverset" }
+                ],
+                "defaultValue": "overwritenumeric",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "thanksFlairTextTemplate": {
+                "type": "string",
+                "label": "Template for points flair text",
+                "defaultValue": "{{points}}",
+                "helpText": "The template for the flair text. Must include a placeholder {{points}}",
+                "validationEndpoint": "/internal/validators/flair-text-template-includes-placeholder"
+            },
+            "thanksCSSClass": {
+                "type": "string",
+                "label": "CSS class to use for points flairs",
+                "helpText": "Optional. Please choose either a CSS class or flair template, not both."
+            },
+            "thanksFlairTemplate": {
+                "type": "string",
+                "label": "Flair template ID to use for points flairs",
+                "helpText": "Optional. Please choose either a CSS class or flair template, not both.",
+                "validationEndpoint": "/internal/validators/flair-template-valid"
+            },
+            "notifyOnError": {
+                "type": "select",
+                "label": "Notify users by replying to their command if they try to award a point to themselves accidentally",
+                "options": [
+                    { "label": "No Notification", "value": "none" },
+                    { "label": "Send user a private message", "value": "replybypm" },
+                    { "label": "Reply as comment", "value": "replybycomment" }
+                ],
+                "defaultValue": "none",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "notifyOnErrorTemplate": {
+                "type": "paragraph",
+                "label": "Template of message sent when a user tries to award themselves a point",
+                "helpText": "Placeholder supported: {{authorname}}, {{permalink}}",
+                "defaultValue": "Hello {{authorname}},\n\nYou cannot award a point to yourself.\n\nPlease contact the mods if you have any questions.\n\n---\n\n^(I am a bot)"
+            },
+            "notifyOnSuccess": {
+                "type": "select",
+                "label": "Notify users by replying to their command if their points command works",
+                "options": [
+                    { "label": "No Notification", "value": "none" },
+                    { "label": "Send user a private message", "value": "replybypm" },
+                    { "label": "Reply as comment", "value": "replybycomment" }
+                ],
+                "defaultValue": "none",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "notifyOnSuccessTemplate": {
+                "type": "paragraph",
+                "label": "Template of message sent when a user successfully awards a point",
+                "helpText": "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
+                "defaultValue": "You have awarded 1 point to {{awardeeusername}}.\n\n---\n\n^(I am a bot - please contact the mods with any questions)"
+            },
+            "notifyAwardedUser": {
+                "type": "select",
+                "label": "Notify users who have had a point awarded",
+                "options": [
+                    { "label": "No Notification", "value": "none" },
+                    { "label": "Send user a private message", "value": "replybypm" },
+                    { "label": "Reply as comment", "value": "replybycomment" }
+                ],
+                "defaultValue": "none",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "notifyAwardedUserTemplate": {
+                "type": "paragraph",
+                "label": "Template of message sent to a user who is awarded a point",
+                "helpText": "Placeholders supported: {{authorname}}, {{awardeeusername}}, {{permalink}}, {{score}}",
+                "defaultValue": "Hello {{awardeeusername}},\n\nYou have been awarded a point for your contribution! New score: {{score}}\n\n---\n\n^(I am a bot - please contact the mods with any questions)"
+            },
+            "setPostFlairOnThanks": {
+                "type": "boolean",
+                "label": "Set post flair when a reputation point is awarded",
+                "helpText": "This can be used to mark a question as resolved, or answered",
+                "defaultValue": false
+            },
+            "setPostFlairOnThanksText": {
+                "type": "string",
+                "label": "Post Flair Text to set after awarding points",
+                "helpText": "E.g. to mark a question as resolved, you might set this to \"Resolved\". Optional."
+            },
+            "setPostFlairOnThanksCSSClass": {
+                "type": "string",
+                "label": "Post Flair CSS Class",
+                "helpText": "Optional. Please choose either a CSS class or flair template, not both."
+            },
+            "setPostFlairOnThanksTemplate": {
+                "type": "string",
+                "label": "Post Flair Template ID",
+                "helpText": "Optional. Please choose either a CSS class or flair template, not both.",
+                "validationEndpoint": "/internal/validators/flair-template-valid"
+            },
+            "leaderboardMode": {
+                "type": "select",
+                "label": "Wiki Leaderboard Mode",
+                "options": [
+                    { "label": "Off", "value": "off" },
+                    { "label": "Mod Only", "value": "modonly" },
+                    { "label": "Default settings for wiki", "value": "public" }
+                ],
+                "defaultValue": "off",
+                "helpText": "Controls the visibility of the leaderboard on the wiki. NOTE: The leaderboard wiki page will only update if you have not opted in to the new Wiki experience",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "leaderboardWikiPage": {
+                "type": "string",
+                "label": "Leaderboard Wiki Page",
+                "defaultValue": "reputatorbotleaderboard"
+            },
+            "leaderboardSize": {
+                "type": "number",
+                "label": "Leaderboard Size",
+                "defaultValue": 20,
+                "validationEndpoint": "/internal/validators/leaderboard-size-valid"
+            },
+            "leaderboardHelpPage": {
+                "type": "string",
+                "label": "Leaderboard Help Page",
+                "helpText": "Optional. A web page (e.g. on your wiki, or an announcement post) telling users how to use reputation points on your subreddit"
+            },
+            "enableBackup": {
+                "type": "boolean",
+                "label": "Enable Backup",
+                "defaultValue": true
+            },
+            "enableRestore": {
+                "type": "boolean",
+                "label": "Enable Restore",
+                "helpText": "This should be left disabled to prevent inadvertent score overwriting. Only enable during restore operations.",
+                "defaultValue": false
+            }
+        }
+    },
+    "dev": {
+        "subreddit": "fsvsandbox"
+    }
+}
