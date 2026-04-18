@@ -6,11 +6,10 @@ import pluralize from "pluralize";
 
 export const updateLeaderboardJob = async (c: Context) => {
     const jobRequest = await c.req.json<ScheduledCronJob>();
-    console.log("sendReminderJob:", jobRequest);
 
     await updateLeaderboard(jobRequest);
 
-    return c.json({ message: "cleanup job completed" }, 200);
+    return c.json({ message: "leaderboard update job completed" }, 200);
 };
 
 export async function updateLeaderboard (jobRequest: ScheduledCronJob) {
