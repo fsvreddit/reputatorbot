@@ -12,4 +12,5 @@ jobs:
           node-version: '22.x'
       - run: npm install
       - run: npx eslint
+      - run: npm run type-check
       - run: npm run build
