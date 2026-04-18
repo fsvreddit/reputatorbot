@@ -9,6 +9,6 @@
 
     "rootDir": "../src/shared"
   },
-  "include": ["../src/shared/**/*", "../src/server/tasks/constants.ts"],
+  "include": ["../src/shared/**/*"],
   "exclude": []
 }
