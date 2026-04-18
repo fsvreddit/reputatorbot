@@ -9,7 +9,6 @@ const DAYS_BETWEEN_CHECKS = 28;
 
 export const handleCleanupJob = async (c: Context) => {
     const jobRequest = await c.req.json<ScheduledCronJob>();
-    console.log("sendReminderJob:", jobRequest);
 
     await cleanupDeletedAccounts(jobRequest);
 
