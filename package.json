@@ -16,10 +16,10 @@
     "node": ">=22.2.0"
   },
   "dependencies": {
-    "@devvit/shared-types": "0.12.17",
-    "@devvit/start": "0.12.17",
-    "@devvit/web": "0.12.17",
-    "@hono/node-server": "^1.14.4",
+    "@devvit/shared-types": "0.12.20",
+    "@devvit/start": "0.12.20",
+    "@devvit/web": "0.12.20",
+    "@hono/node-server": "^2.0.0",
     "date-fns": "^4.0.0",
     "hono": "^4.7.7",
     "markdown-escape": "^2.0.0",
@@ -40,7 +40,7 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "6.0.1",
-    "devvit": "0.12.17",
+    "devvit": "0.12.20",
     "eslint": "^10.0.0",
     "tailwindcss": "^4.1.18",
     "typescript": "5.8.3",
