@@ -75,6 +75,7 @@ export async function updateLeaderboard (jobRequest: ScheduledCronJob) {
     const correctPermissionLevel = leaderboardMode === LeaderboardMode.Public ? 0 : 2;
 
     const wikiPageSettings = await wikiPage.getSettings();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     if (wikiPageSettings.permLevel as number !== correctPermissionLevel) {
         await reddit.updateWikiPageSettings({
             subredditName: context.subredditName,

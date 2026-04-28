@@ -38,7 +38,7 @@ export async function backupAllScores (): Promise<UiResponse> {
 
     const currentScores = await redis.zRange(POINTS_STORE_KEY, 0, -1);
 
-    const compactScores = currentScores.map(score => ({ u: score.member, s: score.score } as CompactScore));
+    const compactScores: CompactScore[] = currentScores.map(score => ({ u: score.member, s: score.score }));
     const compressed = compressScores(compactScores);
 
     let wikiPage: WikiPage | undefined;
@@ -161,7 +161,7 @@ export async function restoreFormHandler (restoreFormValues: RestoreScoresFormVa
         };
     }
 
-    await redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => ({ member: score.u, score: score.s } as ZMember)));
+    await redis.zAdd(POINTS_STORE_KEY, ...scoresToAdd.map(score => ({ member: score.u, score: score.s })));
 
     await setCleanupForUsers(scoresToAdd.map(score => score.u));
 
