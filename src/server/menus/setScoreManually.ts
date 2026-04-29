@@ -43,13 +43,6 @@ export const handleSetScoreManuallyMenu = async (c: Context) => {
                         helpText: "Warning: This will overwrite the score that currently exists",
                         required: true,
                     },
-                    {
-                        name: "commentId",
-                        type: "string",
-                        label: "Comment ID (for internal use)",
-                        disabled: true,
-                        defaultValue: menuRequest.targetId,
-                    },
                 ],
             },
         },

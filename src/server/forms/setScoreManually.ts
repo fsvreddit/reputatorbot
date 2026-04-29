@@ -1,17 +1,21 @@
-import { reddit, settings, User } from "@devvit/web/server";
-import { T1, UiResponse } from "@devvit/web/shared";
+import { context, reddit, settings, User } from "@devvit/web/server";
+import { UiResponse } from "@devvit/web/shared";
 import type { Context } from "hono";
 import { getCurrentScore, ScoreResult, setUserScore } from "../core/thanksPoints";
 
 interface SetScoreManuallyFormValues {
     newScore: number;
-    commentId: T1;
 }
 
 export const handleSetScoreManuallyForm = async (c: Context) => {
-    const { newScore, commentId } = await c.req.json<SetScoreManuallyFormValues>();
+    const { newScore } = await c.req.json<SetScoreManuallyFormValues>();
+    if (!context.commentId) {
+        return c.json<UiResponse>({
+            showToast: "No comment selected.",
+        });
+    }
 
-    const comment = await reddit.getCommentById(commentId);
+    const comment = await reddit.getCommentById(context.commentId);
 
     let user: User | undefined;
     try {
