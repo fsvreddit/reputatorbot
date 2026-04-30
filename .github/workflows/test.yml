@@ -9,9 +9,8 @@ jobs:
       - name: use node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
       - run: npm install
-      - run: npx tsc --build
-      - run: npx tsc --build --clean
-      - run: npm run test
       - run: npx eslint
+      - run: npm run type-check
+      - run: npm run build

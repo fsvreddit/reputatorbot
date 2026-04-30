@@ -5,30 +5,45 @@
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
-    "test": "npm run test:unit",
-    "test:unit": "vitest --run"
+    "build": "vite build",
+    "deploy": "npm run type-check && npm run lint && devvit upload",
+    "dev": "devvit playtest",
+    "launch": "npm run deploy && devvit publish",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "type-check": "tsc --build"
+  },
+  "engines": {
+    "node": ">=22.2.0"
   },
   "dependencies": {
-    "@devvit/protos": "0.12.0",
-    "@devvit/public-api": "0.12.0",
-    "@devvit/shared-types": "0.12.0",
-    "@types/markdown-escape": "^1.1.3",
-    "@types/pako": "^2.0.3",
-    "@types/pluralize": "^0.0.33",
-    "ajv": "^8.13.0",
-    "cron-parser": "^5.1.1",
+    "@devvit/shared-types": "0.12.21",
+    "@devvit/start": "0.12.21",
+    "@devvit/web": "0.12.21",
+    "@hono/node-server": "^2.0.0",
     "date-fns": "^4.0.0",
+    "hono": "^4.7.7",
     "markdown-escape": "^2.0.0",
     "pako": "^2.1.0",
-    "pluralize": "^8.0.0"
+    "pluralize": "^8.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@eslint/js": "^9.10.0",
-    "@stylistic/eslint-plugin": "^4.2.0",
-    "@vitest/eslint-plugin": "^1.1.0",
-    "eslint": "^9.10.0",
+    "@fsvreddit/eslint-config": "github:fsvreddit/eslint-config",
+    "@tailwindcss/vite": "4.2.4",
+    "@types/markdown-escape": "^1.1.3",
+    "@types/node": "^22.19.7",
+    "@types/pako": "^2.0.3",
+    "@types/pluralize": "^0.0.33",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "devvit": "0.12.21",
+    "eslint": "^10.0.0",
+    "tailwindcss": "^4.1.18",
     "typescript": "5.8.3",
-    "typescript-eslint": "^8.4.0",
-    "vitest": "^3.0.5"
+    "vite": "^8.0.3"
   }
 }
