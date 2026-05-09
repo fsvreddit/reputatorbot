@@ -39,6 +39,10 @@ This app is open source and licenced under the BSD 3-Clause Licence. [You can fi
 
 ## Version History
 
+### v2.0.1
+
+* Mitigate against duplicate actions if the Developer Platform is having issues
+
 ### v2.0
 
 * Rewrite for Devvit Web, improving leaderboard post format
