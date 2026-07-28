@@ -1,5 +1,5 @@
 import { context, reddit, redis, scheduler, settings, WikiPage, ZMember } from "@devvit/web/server";
-import pako from "pako";
+import { deflate, inflate } from "pako";
 import pluralize from "pluralize";
 import { AppSetting } from "./settings.js";
 import { POINTS_STORE_KEY } from "./constants.js";
@@ -19,11 +19,11 @@ const schema: z.ZodType<CompactScore[]> = z.array(z.object({
 }));
 
 export function compressScores (value: CompactScore[]): string {
-    return Buffer.from(pako.deflate(JSON.stringify(value))).toString("base64");
+    return Buffer.from(deflate(JSON.stringify(value))).toString("base64");
 }
 
 export function decompressScores (blob: string): CompactScore[] {
-    const json = Buffer.from(pako.inflate(Buffer.from(blob, "base64"))).toString();
+    const json = Buffer.from(inflate(Buffer.from(blob, "base64"))).toString();
     return JSON.parse(json) as CompactScore[];
 }
 
