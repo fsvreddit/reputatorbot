@@ -1,11 +1,11 @@
 import { OnCommentUpdateRequest } from "@devvit/web/shared";
 import type { Context } from "hono";
 import { handleThanksEvent } from "../core/thanksPoints";
-import { hasTriggerBeenHandled } from "../core";
 import { addSeconds } from "date-fns";
+import { fixCommentTriggerEvent, hasTriggerBeenHandled } from "@fsvreddit/fsv-devvit-web-helpers";
 
 export const onCommentUpdate = async (c: Context) => {
-    const commentUpdateRequest = await c.req.json<OnCommentUpdateRequest>();
+    const commentUpdateRequest = await fixCommentTriggerEvent(await c.req.json<OnCommentUpdateRequest>());
     if (!commentUpdateRequest.comment) {
         return c.json({ message: "invalid request: missing comment" }, 400);
     }

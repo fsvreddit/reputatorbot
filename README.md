@@ -39,6 +39,11 @@ This app is open source and licenced under the BSD 3-Clause Licence. [You can fi
 
 ## Version History
 
+### v2.1.0
+
+* Improve App Settings by returning groups to settings
+* Further mitigations against duplicate actions if Dev Platform is having issues
+
 ### v2.0.1
 
 * Mitigate against duplicate actions if the Developer Platform is having issues

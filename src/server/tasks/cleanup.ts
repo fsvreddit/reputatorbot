@@ -1,18 +1,22 @@
-import { context, reddit, redis, ScheduledCronJob, scheduler, User } from "@devvit/web/server";
+import { context, reddit, redis, scheduler, TaskRequest, TaskResponse, User } from "@devvit/web/server";
 import type { Context } from "hono";
 import { addDays, addMinutes, addSeconds } from "date-fns";
-import { POINTS_STORE_KEY } from "../core";
+import { CleanupJobData, POINTS_STORE_KEY, SchedulerJob, UpdateLeaderboardJobData } from "../core";
+import { hasTriggerBeenHandled } from "@fsvreddit/fsv-devvit-web-helpers";
 
 const CLEANUP_LOG_KEY = "cleanupStore";
-const CLEANUP_JOB_NAME = "cleanupJob";
 const DAYS_BETWEEN_CHECKS = 28;
 
 export const handleCleanupJob = async (c: Context) => {
-    const jobRequest = await c.req.json<ScheduledCronJob>();
+    const jobRequest = await c.req.json<TaskRequest<CleanupJobData>>();
+    if (jobRequest.data.jobGuid && await hasTriggerBeenHandled(`cleanup:${jobRequest.data.jobGuid}`)) {
+        console.warn(`Duplicate cleanup job ignored: ${jobRequest.data.jobGuid}`);
+        return c.json({ message: "duplicate cleanup job ignored" }, 200);
+    }
 
     await cleanupDeletedAccounts(jobRequest);
 
-    return c.json({ message: "cleanup job completed" }, 200);
+    return c.json<TaskResponse>({ message: "cleanup job completed" }, 200);
 };
 
 export async function setCleanupForUsers (usernames: string[]) {
@@ -43,7 +47,7 @@ async function userActive (username: string): Promise<boolean> {
     }
 }
 
-export async function cleanupDeletedAccounts (jobRequest: ScheduledCronJob) {
+export async function cleanupDeletedAccounts (jobRequest: TaskRequest<CleanupJobData>) {
     const recentlyRunKey = "cleanupRecentlyRun";
 
     const items = await redis.zRange(CLEANUP_LOG_KEY, 0, new Date().getTime(), { by: "score" });
@@ -54,7 +58,7 @@ export async function cleanupDeletedAccounts (jobRequest: ScheduledCronJob) {
         return;
     }
 
-    if (jobRequest.data?.fromCron && await redis.exists(recentlyRunKey)) {
+    if (jobRequest.data.fromCron && await redis.exists(recentlyRunKey)) {
         // Recently run from cron, skip this run to avoid overlapping runs.
         return;
     }
@@ -91,9 +95,12 @@ export async function cleanupDeletedAccounts (jobRequest: ScheduledCronJob) {
     if (deletedUsers > 0) {
         // Force an immediate leaderboard update, because some accounts newly cleaned up might have been visible there.
         await scheduler.runJob({
-            name: "updateLeaderboard",
+            name: SchedulerJob.UpdateLeaderboard,
             runAt: new Date(),
-            data: { reason: "One or more deleted accounts removed from database" },
+            data: {
+                reason: "One or more deleted accounts removed from database",
+                jobGuid: crypto.randomUUID(),
+            } satisfies UpdateLeaderboardJobData,
         });
     }
 
@@ -102,7 +109,7 @@ export async function cleanupDeletedAccounts (jobRequest: ScheduledCronJob) {
     if (items.length > 0) {
         // In a backlog, so force another run.
         await scheduler.runJob({
-            name: CLEANUP_JOB_NAME,
+            name: SchedulerJob.CleanupJob,
             runAt: new Date(),
         });
     } else {
@@ -122,7 +129,7 @@ export async function scheduleAdhocCleanup () {
     const nextCleanupJobTime = addMinutes(nextEntry.score, 1);
 
     const existingJobs = await scheduler.listJobs();
-    const cancellableJobs = existingJobs.filter(job => job.name === CLEANUP_JOB_NAME && "runAt" in job);
+    const cancellableJobs = existingJobs.filter(job => job.name === SchedulerJob.CleanupJob as string && "runAt" in job);
     await Promise.all(cancellableJobs.map(job => scheduler.cancelJob(job.id)));
 
     if (nextCleanupJobTime > addDays(new Date(), 1)) {
@@ -132,8 +139,12 @@ export async function scheduleAdhocCleanup () {
     }
 
     await scheduler.runJob({
-        name: CLEANUP_JOB_NAME,
+        name: SchedulerJob.CleanupJob,
         runAt: nextCleanupJobTime < new Date() ? new Date() : nextCleanupJobTime,
+        data: {
+            fromCron: false,
+            jobGuid: crypto.randomUUID(),
+        } satisfies CleanupJobData,
     });
 
     console.log(`Cleanup: Next ad-hoc cleanup: ${nextCleanupJobTime.toUTCString()}`);

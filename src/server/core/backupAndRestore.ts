@@ -5,7 +5,8 @@ import { AppSetting } from "./settings.js";
 import { POINTS_STORE_KEY } from "./constants.js";
 import z from "zod";
 import { UiResponse } from "@devvit/web/shared";
-import { scheduleAdhocCleanup, setCleanupForUsers } from "../tasks/cleanup.js";
+import { scheduleAdhocCleanup, setCleanupForUsers } from "../tasks";
+import { SchedulerJob, UpdateLeaderboardJobData } from ".";
 
 export interface CompactScore {
     u: string;
@@ -166,9 +167,12 @@ export async function restoreFormHandler (restoreFormValues: RestoreScoresFormVa
     await setCleanupForUsers(scoresToAdd.map(score => score.u));
 
     await scheduler.runJob({
-        name: "updateLeaderboard",
+        name: SchedulerJob.UpdateLeaderboard,
         runAt: new Date(),
-        data: { reason: "Imported data from backup" },
+        data: {
+            reason: "Imported data from backup",
+            jobGuid: crypto.randomUUID(),
+        } satisfies UpdateLeaderboardJobData,
     });
 
     // Remove "Install Date" redis key, because we can now assume that historical data is populated.

@@ -2,7 +2,7 @@ import { context, reddit, redis, scheduler, settings, SettingsValues, User } fro
 import { isT3, T1, T3 } from "@devvit/shared-types/tid.js";
 import { addWeeks } from "date-fns";
 import { ExistingFlairOverwriteHandling, ReplyOptions, TemplateDefaults, AppSetting } from "./settings.js";
-import { isModerator, POINTS_STORE_KEY } from "./index.js";
+import { isModerator, POINTS_STORE_KEY, SchedulerJob, UpdateLeaderboardJobData } from ".";
 import { OnCommentSubmitRequest, OnCommentUpdateRequest } from "@devvit/web/shared";
 import markdownEscape from "markdown-escape";
 import { setCleanupForUsers } from "../tasks/index.js";
@@ -318,9 +318,12 @@ export async function setUserScore (username: string, newScore: ScoreResult, app
 
     // Queue a leaderboard update.
     await scheduler.runJob({
-        name: "updateLeaderboard",
+        name: SchedulerJob.UpdateLeaderboard,
         runAt: new Date(),
-        data: { reason: `Awarded a point to ${username}. New score: ${newScore.score}` },
+        data: {
+            reason: `Awarded a point to ${username}. New score: ${newScore.score}`,
+            jobGuid: crypto.randomUUID(),
+        } satisfies UpdateLeaderboardJobData,
     });
 
     const existingFlairOverwriteHandling = (appSettings[AppSetting.ExistingFlairHandling] as ExistingFlairOverwriteHandling | undefined) ?? ExistingFlairOverwriteHandling.OverwriteNumeric;

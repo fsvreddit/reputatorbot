@@ -1,18 +1,23 @@
-import { context, redis, reddit, ScheduledCronJob, settings, WikiPage } from "@devvit/web/server";
+import { context, redis, reddit, settings, WikiPage, TaskRequest } from "@devvit/web/server";
 import type { Context } from "hono";
-import { AppSetting, LeaderboardMode, POINTS_STORE_KEY } from "../core";
+import { AppSetting, LeaderboardMode, POINTS_STORE_KEY, UpdateLeaderboardJobData } from "../core";
 import markdownEscape from "markdown-escape";
 import pluralize from "pluralize";
+import { hasTriggerBeenHandled } from "@fsvreddit/fsv-devvit-web-helpers";
 
 export const updateLeaderboardJob = async (c: Context) => {
-    const jobRequest = await c.req.json<ScheduledCronJob>();
+    const jobRequest = await c.req.json<TaskRequest<UpdateLeaderboardJobData>>();
+    if (await hasTriggerBeenHandled(`updateLeaderboard:${jobRequest.data.jobGuid}`)) {
+        console.warn(`Duplicate leaderboard update job ignored: ${jobRequest.data.jobGuid}`);
+        return c.json({ message: "duplicate leaderboard update job ignored" }, 200);
+    }
 
     await updateLeaderboard(jobRequest);
 
     return c.json({ message: "leaderboard update job completed" }, 200);
 };
 
-export async function updateLeaderboard (jobRequest: ScheduledCronJob) {
+export async function updateLeaderboard (jobRequest: TaskRequest<UpdateLeaderboardJobData>) {
     const appSettings = await settings.getAll();
 
     const [leaderboardMode] = appSettings[AppSetting.LeaderboardMode] as LeaderboardMode[] | undefined ?? [LeaderboardMode.Off];
@@ -58,7 +63,7 @@ export async function updateLeaderboard (jobRequest: ScheduledCronJob) {
         subredditName: context.subredditName,
         page: wikiPageName,
         content: wikiContents,
-        reason: jobRequest.data?.reason as string | undefined,
+        reason: jobRequest.data.reason,
     };
 
     if (wikiPage) {

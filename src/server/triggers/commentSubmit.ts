@@ -1,10 +1,10 @@
 import { OnCommentSubmitRequest, TriggerResponse } from "@devvit/web/shared";
 import type { Context } from "hono";
 import { handleThanksEvent } from "../core/thanksPoints";
-import { hasTriggerBeenHandled } from "../core";
+import { fixCommentTriggerEvent, hasTriggerBeenHandled } from "@fsvreddit/fsv-devvit-web-helpers";
 
 export const onCommentSubmit = async (c: Context) => {
-    const commentSubmitRequest = await c.req.json<OnCommentSubmitRequest>();
+    const commentSubmitRequest = await fixCommentTriggerEvent(await c.req.json<OnCommentSubmitRequest>());
     if (!commentSubmitRequest.comment) {
         return c.json<TriggerResponse>({ message: "invalid request: missing comment" }, 400);
     }
