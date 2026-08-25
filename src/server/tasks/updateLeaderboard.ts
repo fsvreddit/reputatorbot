@@ -1,9 +1,9 @@
-import { context, redis, reddit, settings, WikiPage, TaskRequest } from "@devvit/web/server";
+import { context, redis, reddit, settings, TaskRequest } from "@devvit/web/server";
 import type { Context } from "hono";
 import { AppSetting, LeaderboardMode, POINTS_STORE_KEY, UpdateLeaderboardJobData } from "../core";
 import markdownEscape from "markdown-escape";
 import pluralize from "pluralize";
-import { hasTriggerBeenHandled } from "@fsvreddit/fsv-devvit-web-helpers";
+import { hasTriggerBeenHandled, updateWikiPageMulti } from "@fsvreddit/fsv-devvit-web-helpers";
 
 export const updateLeaderboardJob = async (c: Context) => {
     const jobRequest = await c.req.json<TaskRequest<UpdateLeaderboardJobData>>();
@@ -52,13 +52,6 @@ export async function updateLeaderboard (jobRequest: TaskRequest<UpdateLeaderboa
         wikiContents += `\n\n[How to award points on /r/${context.subredditName}](${helpPage})`;
     }
 
-    let wikiPage: WikiPage | undefined;
-    try {
-        wikiPage = await reddit.getWikiPage(context.subredditName, wikiPageName);
-    } catch {
-        //
-    }
-
     const wikiPageOptions = {
         subredditName: context.subredditName,
         page: wikiPageName,
@@ -66,15 +59,7 @@ export async function updateLeaderboard (jobRequest: TaskRequest<UpdateLeaderboa
         reason: jobRequest.data.reason,
     };
 
-    if (wikiPage) {
-        if (wikiPage.content !== wikiContents) {
-            await reddit.updateWikiPage(wikiPageOptions);
-            console.log("Leaderboard: Leaderboard updated.");
-        }
-    } else {
-        wikiPage = await reddit.createWikiPage(wikiPageOptions);
-        console.log("Leaderboard: Leaderboard created.");
-    }
+    const wikiPage = await updateWikiPageMulti(wikiPageOptions);
 
     // 0 = public, 2 = mod only
     const correctPermissionLevel = leaderboardMode === LeaderboardMode.Public ? 0 : 2;

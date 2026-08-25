@@ -16,9 +16,9 @@
     "node": ">=22.2.0"
   },
   "dependencies": {
-    "@devvit/shared-types": "0.13.10",
-    "@devvit/start": "0.13.10",
-    "@devvit/web": "0.13.10",
+    "@devvit/shared-types": "0.14.1",
+    "@devvit/start": "0.14.1",
+    "@devvit/web": "0.14.1",
     "@fsvreddit/fsv-devvit-web-helpers": "github:fsvreddit/fsv-devvit-web-helpers",
     "@hono/node-server": "^2.0.0",
     "date-fns": "^4.0.0",
@@ -40,7 +40,7 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
-    "devvit": "0.13.10",
+    "devvit": "0.14.1",
     "eslint": "^10.0.0",
     "tailwindcss": "^4.1.18",
     "typescript": "5.8.3",

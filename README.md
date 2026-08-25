@@ -39,6 +39,10 @@ This app is open source and licenced under the BSD 3-Clause Licence. [You can fi
 
 ## Version History
 
+### v2.2.0
+
+* Add support for New Wikis when using the wiki page leaderboard
+
 ### v2.1.0
 
 * Improve App Settings by returning groups to settings
