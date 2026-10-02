@@ -59,7 +59,7 @@ export async function updateLeaderboard (jobRequest: TaskRequest<UpdateLeaderboa
         reason: jobRequest.data.reason,
     };
 
-    const wikiPage = await updateWikiPageMulti(wikiPageOptions);
+    const wikiPage = await updateWikiPageMulti(wikiPageOptions, true);
 
     // 0 = public, 2 = mod only
     const correctPermissionLevel = leaderboardMode === LeaderboardMode.Public ? 0 : 2;
